@@ -1,55 +1,109 @@
 package com.codegym.homestay_booking.entity;
 
-public abstract class Room {
+public class Room {
+    private int roomId;
+    private RoomType roomType;
+    private int sleepSlot;
+    private float roomPrice;
+    private RoomStatus status;
+    private String imageUrl;
+    private String description;
 
-   private int roomId;
-   private float roomPrice;
-   private int sleepSlot;
-   private RoomType roomType;
-   private Status status;
+    public enum RoomType {
+        Family,
+        Business,
+        Honey_Moon
+    }
 
-   public int getRoomId() {
-         return 0;
-   }
+    public enum RoomStatus {
+        AVAILABLE,
+        UNAVAILABLE
+    }
 
+    // Constructors
+    public Room() {
+    }
 
-   public enum RoomType {
-      FAMILY,
-      BUSINESS,
-      HONEYMOON
-   }
+    public Room(int roomId, RoomType roomType, int sleepSlot, float roomPrice, 
+                RoomStatus status, String imageUrl, String description) {
+        this.roomId = roomId;
+        this.roomType = roomType;
+        this.sleepSlot = sleepSlot;
+        this.roomPrice = roomPrice;
+        this.status = status;
+        this.imageUrl = imageUrl;
+        this.description = description;
+    }
 
-   public enum Status {
-      AVAILABLE,
-      UNAVAILABLE
-   }
+    // Getters and Setters
+    public int getRoomId() {
+        return roomId;
+    }
 
-   public Room() {
-   }
+    public void setRoomId(int roomId) {
+        this.roomId = roomId;
+    }
 
-   public Room(int roomId, float roomPrice, int sleepSlot,
-               RoomType roomType, Status status) {
-      this.roomId = roomId;
-      this.roomPrice = roomPrice;
-      this.sleepSlot = sleepSlot;
-      this.roomType = roomType;
-      this.status = status;
-   }
+    public RoomType getRoomType() {
+        return roomType;
+    }
 
+    public void setRoomType(RoomType roomType) {
+        this.roomType = roomType;
+    }
 
-   public RoomType getRoomType() {
-      return roomType;
-   }
+    public int getSleepSlot() {
+        return sleepSlot;
+    }
 
-   public void setRoomType(RoomType roomType) {
-      this.roomType = roomType;
-   }
+    public void setSleepSlot(int sleepSlot) {
+        this.sleepSlot = sleepSlot;
+    }
 
-   public Status getStatus() {
-      return status;
-   }
+    public float getRoomPrice() {
+        return roomPrice;
+    }
 
-   public void setStatus(Status status) {
-      this.status = status;
-   }
+    public void setRoomPrice(float roomPrice) {
+        this.roomPrice = roomPrice;
+    }
+
+    public RoomStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RoomStatus status) {
+        this.status = status;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getFormattedPrice() {
+        return String.format("%,.0f VND", roomPrice);
+    }
+
+    @Override
+    public String toString() {
+        return "Room{" +
+                "roomId=" + roomId +
+                ", roomType=" + roomType +
+                ", sleepSlot=" + sleepSlot +
+                ", roomPrice=" + roomPrice +
+                ", status=" + status +
+                '}';
+    }
 }
