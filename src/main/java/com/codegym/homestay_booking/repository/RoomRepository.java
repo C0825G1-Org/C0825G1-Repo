@@ -1,4 +1,4 @@
 package com.codegym.homestay_booking.repository;
 
-public class RoomRepository {
+public class RoomRepository{
 }
