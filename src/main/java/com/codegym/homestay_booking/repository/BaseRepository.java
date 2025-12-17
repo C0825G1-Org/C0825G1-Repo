@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class BaseRepository {
-    private static String jdbcURL = "jdbc:mysql://localhost:3306/homestay_booking?useSSL=false&&serverTimezone=UTC";
+    private static String jdbcURL = "jdbc:mysql://localhost:3306/room_booking?useSSL=false&&serverTimezone=UTC";
     private static String jdbcUsername = "root";
     private static String jdbcPassword = "triphung15";
     private static Connection connection =null;
