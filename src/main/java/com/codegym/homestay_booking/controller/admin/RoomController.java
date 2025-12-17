@@ -5,6 +5,4 @@ import com.codegym.homestay_booking.service.IRoomService;
 import com.codegym.homestay_booking.service.RoomService;
 
 public class RoomController {
-
-   private  final IRoomService roomService = new RoomService();
 }

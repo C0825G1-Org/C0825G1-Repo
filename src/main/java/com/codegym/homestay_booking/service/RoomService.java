@@ -1,6 +1,5 @@
 package com.codegym.homestay_booking.service;
 
-import com.codegym.homestay_booking.entity.BusinessRoom;
 import com.codegym.homestay_booking.entity.Room;
 import com.codegym.homestay_booking.repository.BaseRepository;
 
@@ -15,24 +14,7 @@ public class RoomService implements IService<Room> {
 
    @Override
    public List<Room> getAll() {
-      List<Room> rooms = new ArrayList<>();
-      try {
-         ResultSet rs = BaseRepository.getConnection()
-               .prepareStatement("SELECT * FROM room")
-               .executeQuery();
-
-         while (rs.next()) {
-            Room room = new BusinessRoom(
-                  rs.getInt("room_id"),
-                  rs.getFloat("room_price"),
-                  rs.getInt("sleep_slot")
-            );
-            rooms.add(room);
-         }
-      } catch (SQLException e) {
-         e.printStackTrace();
-      }
-      return rooms;
+      return null;
    }
 
    @Override
@@ -52,11 +34,10 @@ public class RoomService implements IService<Room> {
       return false;
    }
 
-
-   @Override
-   public boolean delete(Room entity) {
-      return false;
-   }
+    @Override
+    public boolean delete(int id) {
+        return false;
+    }
 
    @Override
    public boolean update(Room entity) {
