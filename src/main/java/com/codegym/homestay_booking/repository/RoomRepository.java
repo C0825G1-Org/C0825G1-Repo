@@ -205,4 +205,33 @@ public class RoomRepository {
         
         return rooms;
     }
+    
+    // Dashboard Statistics Methods
+    
+    public int countAllRooms() {
+        String sql = "SELECT COUNT(*) FROM room";
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    public int countByStatus(RoomStatus status) {
+        String sql = "SELECT COUNT(*) FROM room WHERE status = ?";
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql)) {
+            ps.setString(1, status.toString());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 }
