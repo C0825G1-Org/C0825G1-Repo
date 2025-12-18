@@ -150,6 +150,14 @@
                                 <i class="bi bi-printer"></i> Print Invoice
                             </a>
 
+                            <!-- Edit Button (conditional - only if editable) -->
+                            <c:if test="${booking.canBeEdited()}">
+                                <a href="${pageContext.request.contextPath}/admin/bookings?action=edit&id=${booking.bookingId}"
+                                    class="btn btn-warning w-100">
+                                    <i class="bi bi-pencil-square"></i> Edit Booking
+                                </a>
+                            </c:if>
+
                             <!-- Approve Button -->
                             <c:if test="${booking.canBeApproved()}">
                                 <form method="post" action="${pageContext.request.contextPath}/admin/bookings"
