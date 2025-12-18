@@ -3,14 +3,15 @@
 
         <!-- Page Header -->
         <div class="page-header">
-            <h2><i class="bi bi-plus-circle"></i> Create New Booking</h2>
-            <p class="text-muted mb-0">Create a new booking for a guest</p>
+            <h2><i class="bi bi-pencil-square"></i> Edit Booking #${booking.bookingId}</h2>
+            <p class="text-muted mb-0">Modify booking information</p>
         </div>
 
         <!-- Back Button -->
         <div class="mb-3">
-            <a href="${pageContext.request.contextPath}/admin/bookings" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Back to List
+            <a href="${pageContext.request.contextPath}/admin/bookings?action=detail&id=${booking.bookingId}"
+                class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Details
             </a>
         </div>
 
@@ -31,11 +32,12 @@
             <c:remove var="errorMessage" scope="session" />
         </c:if>
 
-        <!-- Create Booking Form -->
+        <!-- Edit Booking Form -->
         <div class="card">
             <div class="card-body">
                 <form method="post" action="${pageContext.request.contextPath}/admin/bookings" id="bookingForm">
-                    <input type="hidden" name="action" value="create">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="bookingId" value="${booking.bookingId}">
 
                     <div class="row">
                         <!-- Guest Information -->
@@ -46,14 +48,14 @@
                                 <label for="guestName" class="form-label">Guest Name <span
                                         class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="guestName" name="guestName" required
-                                    placeholder="Enter guest full name">
+                                    value="${booking.guestName}" placeholder="Enter guest full name">
                             </div>
 
                             <div class="mb-3">
                                 <label for="guestEmail" class="form-label">Guest Email <span
                                         class="text-danger">*</span></label>
                                 <input type="email" class="form-control" id="guestEmail" name="guestEmail" required
-                                    placeholder="guest@example.com">
+                                    value="${booking.guestEmail}" placeholder="guest@example.com">
                             </div>
                         </div>
 
@@ -69,7 +71,8 @@
                                     <option value="">-- Choose a room --</option>
                                     <c:forEach var="room" items="${rooms}">
                                         <option value="${room.roomId}" data-price="${room.roomPrice}"
-                                            data-type="${room.roomType}" data-slot="${room.sleepSlot}">
+                                            data-type="${room.roomType}" data-slot="${room.sleepSlot}"
+                                            ${room.roomId==booking.roomId ? 'selected' : '' }>
                                             Room #${room.roomId} - ${room.roomType} - ${room.formattedPrice}/night
                                         </option>
                                     </c:forEach>
@@ -82,22 +85,23 @@
                                     <label for="checkInDate" class="form-label">Check-in Date <span
                                             class="text-danger">*</span></label>
                                     <input type="date" class="form-control" id="checkInDate" name="checkInDate" required
-                                        onchange="calculateTotal()">
+                                        value="${booking.checkInDate}" onchange="calculateTotal()">
                                 </div>
 
                                 <div class="col-md-6 mb-3">
                                     <label for="checkOutDate" class="form-label">Check-out Date <span
                                             class="text-danger">*</span></label>
                                     <input type="date" class="form-control" id="checkOutDate" name="checkOutDate"
-                                        required onchange="calculateTotal()">
+                                        required value="${booking.checkOutDate}" onchange="calculateTotal()">
                                 </div>
                             </div>
 
                             <!-- Total Price Preview -->
-                            <div class="alert alert-info" id="pricePreview" style="display: none;">
+                            <div class="alert alert-info" id="pricePreview" style="display: block;">
                                 <h6 class="mb-1">Booking Summary</h6>
-                                <div><strong>Nights:</strong> <span id="nights">0</span></div>
-                                <div><strong>Total Price:</strong> <span id="totalPrice">0 VND</span></div>
+                                <div><strong>Nights:</strong> <span id="nights">${booking.numberOfNights}</span></div>
+                                <div><strong>Total Price:</strong> <span
+                                        id="totalPrice">${booking.formattedPrice}</span></div>
                             </div>
                         </div>
                     </div>
@@ -107,9 +111,10 @@
                     <!-- Submit Buttons -->
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save"></i> Create Booking
+                            <i class="bi bi-save"></i> Update Booking
                         </button>
-                        <a href="${pageContext.request.contextPath}/admin/bookings" class="btn btn-secondary">
+                        <a href="${pageContext.request.contextPath}/admin/bookings?action=detail&id=${booking.bookingId}"
+                            class="btn btn-secondary">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                     </div>
@@ -123,6 +128,9 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('checkInDate').setAttribute('min', today);
             document.getElementById('checkOutDate').setAttribute('min', today);
+
+            // Trigger initial room info display
+            updateRoomInfo();
 
             function updateRoomInfo() {
                 const select = document.getElementById('roomId');

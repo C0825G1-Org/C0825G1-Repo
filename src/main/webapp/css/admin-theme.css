@@ -1,0 +1,171 @@
+/* Admin Color Scheme - Mocha & Nature Theme */
+:root {
+    --admin-cream: #FDF5E6;
+    --admin-mocha: #8B7355;
+    --admin-sage: #9CAF88;
+    --admin-dark-mocha: #5D4E37;
+    --admin-light-sage: #C8D5B9;
+}
+
+/* Body Background */
+body {
+    background-color: var(--admin-cream) !important;
+}
+
+/* Navbar - Remove ALL blue */
+.navbar.admin-navbar {
+    background: linear-gradient(135deg, var(--admin-mocha), var(--admin-dark-mocha)) !important;
+}
+
+.navbar.admin-navbar .navbar-brand,
+.navbar.admin-navbar .nav-link {
+    color: white !important;
+}
+
+/* Sidebar */
+.admin-sidebar {
+    background-color: var(--admin-cream) !important;
+    border-right: 2px solid var(--admin-light-sage) !important;
+}
+
+.admin-sidebar .nav-link {
+    color: var(--admin-dark-mocha) !important;
+    transition: all 0.3s;
+}
+
+.admin-sidebar .nav-link:hover {
+    background-color: var(--admin-light-sage) !important;
+    color: var(--admin-dark-mocha) !important;
+}
+
+.admin-sidebar .nav-link.active {
+    background-color: var(--admin-sage) !important;
+    color: white !important;
+}
+
+/* Primary Buttons - NO BLUE! */
+.btn-primary,
+.btn.btn-primary,
+button.btn-primary {
+    background-color: var(--admin-sage) !important;
+    border-color: var(--admin-sage) !important;
+    color: white !important;
+}
+
+.btn-primary:hover,
+.btn.btn-primary:hover,
+button.btn-primary:hover {
+    background-color: var(--admin-mocha) !important;
+    border-color: var(--admin-mocha) !important;
+    color: white !important;
+}
+
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: var(--admin-mocha) !important;
+    border-color: var(--admin-mocha) !important;
+    box-shadow: 0 0 0 0.2rem rgba(139, 115, 85, 0.5) !important;
+}
+
+/* Outline Primary Buttons */
+.btn-outline-primary {
+    color: var(--admin-sage) !important;
+    border-color: var(--admin-sage) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--admin-sage) !important;
+    border-color: var(--admin-sage) !important;
+    color: white !important;
+}
+
+/* Links */
+a {
+    color: var(--admin-mocha);
+}
+
+a:hover {
+    color: var(--admin-dark-mocha);
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    background: white;
+}
+
+.card-header {
+    background-color: var(--admin-light-sage) !important;
+    color: var(--admin-dark-mocha) !important;
+    border-radius: 16px 16px 0 0 !important;
+    font-weight: 600;
+    border-bottom: 2px solid var(--admin-sage);
+}
+
+/* Tables */
+.table thead th {
+    background-color: var(--admin-sage) !important;
+    color: white !important;
+    border: none;
+    font-weight: 600;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(253, 245, 230, 0.5);
+}
+
+/* Badges - Override Bootstrap defaults */
+.badge.bg-primary,
+.badge.bg-info {
+    background-color: var(--admin-sage) !important;
+}
+
+.badge.bg-secondary {
+    background-color: var(--admin-mocha) !important;
+}
+
+/* Status badges - keep semantic colors but adjust */
+.badge.bg-success {
+    background-color: #7FA86F !important;
+}
+
+.badge.bg-warning {
+    background-color: #DAA520 !important;
+}
+
+.badge.bg-danger {
+    background-color: #C85450 !important;
+}
+
+/* Forms */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--admin-sage) !important;
+    box-shadow: 0 0 0 0.2rem rgba(156, 175, 136, 0.25) !important;
+}
+
+/* Page Header */
+.page-header {
+    background: white;
+    border-left: 4px solid var(--admin-sage);
+}
+
+/* Content Area */
+.content-area {
+    background-color: var(--admin-cream) !important;
+}
+
+/* Remove any remaining blue from Bootstrap */
+.text-primary {
+    color: var(--admin-sage) !important;
+}
+
+.bg-primary {
+    background-color: var(--admin-sage) !important;
+}
+
+.border-primary {
+    border-color: var(--admin-sage) !important;
+}

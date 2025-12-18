@@ -162,6 +162,45 @@ public class BookingRepository {
         }
         return false;
     }
+    
+    /**
+     * Update booking information (simple version without transaction)
+     */
+    public boolean update(Booking booking) {
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(UPDATE_BOOKING);
+            ps.setString(1, booking.getGuestName());
+            ps.setString(2, booking.getGuestEmail());
+            ps.setInt(3, booking.getRoomId());
+            ps.setDate(4, java.sql.Date.valueOf(booking.getCheckInDate()));
+            ps.setDate(5, java.sql.Date.valueOf(booking.getCheckOutDate()));
+            ps.setFloat(6, booking.getTotalPrice());
+            ps.setString(7, booking.getStatus().toString());
+            ps.setInt(8, booking.getBookingId());
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    /**
+     * Update booking with transaction support (for concurrent edits)
+     */
+    public boolean update(Booking booking, Connection connection) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement(UPDATE_BOOKING);
+        ps.setString(1, booking.getGuestName());
+        ps.setString(2, booking.getGuestEmail());
+        ps.setInt(3, booking.getRoomId());
+        ps.setDate(4, java.sql.Date.valueOf(booking.getCheckInDate()));
+        ps.setDate(5, java.sql.Date.valueOf(booking.getCheckOutDate()));
+        ps.setFloat(6, booking.getTotalPrice());
+        ps.setString(7, booking.getStatus().toString());
+        ps.setInt(8, booking.getBookingId());
+        
+        return ps.executeUpdate() > 0;
+    }
 
     public boolean isRoomAvailable(int roomId, LocalDate checkInDate, LocalDate checkOutDate) {
         try {
@@ -197,5 +236,25 @@ public class BookingRepository {
             e.printStackTrace();
         }
         return false;
+    }
+    
+    /**
+     * Get all bookings for a guest by email
+     * For customer booking lookup
+     */
+    public List<Booking> getByGuestEmail(String email) {
+        List<Booking> bookings = new ArrayList<>();
+        String sql = "SELECT * FROM booking WHERE guest_email = ? ORDER BY booking_id DESC";
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql);
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                bookings.add(mapResultSetToBooking(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return bookings;
     }
 }

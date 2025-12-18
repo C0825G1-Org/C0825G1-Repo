@@ -15,16 +15,16 @@ import java.util.List;
 
 @WebServlet("/admin/bookings")
 public class BookingController extends HttpServlet {
-    
+
     private BookingService bookingService = new BookingService();
     private RoomRepository roomRepository = new RoomRepository();
-    
+
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         String action = request.getParameter("action");
-        
+
         try {
             if ("create".equals(action)) {
                 showCreateForm(request, response);
@@ -32,6 +32,8 @@ public class BookingController extends HttpServlet {
                 showBookingDetail(request, response);
             } else if ("invoice".equals(action)) {
                 showInvoice(request, response);
+            } else if ("edit".equals(action)) {
+                showEditForm(request, response);
             } else {
                 showBookingList(request, response);
             }
@@ -41,8 +43,8 @@ public class BookingController extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/views/admin/error.jsp").forward(request, response);
         }
     }
-    
-    private void showBookingList(HttpServletRequest request, HttpServletResponse response) 
+
+    private void showBookingList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         List<Booking> bookings = bookingService.getAll();
         request.setAttribute("bookings", bookings);
@@ -51,8 +53,8 @@ public class BookingController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/admin/layout/admin-layout.jsp")
                 .forward(request, response);
     }
-    
-    private void showCreateForm(HttpServletRequest request, HttpServletResponse response) 
+
+    private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         List<Room> rooms = roomRepository.getAvailableRooms();
         request.setAttribute("rooms", rooms);
@@ -61,21 +63,21 @@ public class BookingController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/admin/layout/admin-layout.jsp")
                 .forward(request, response);
     }
-    
-    private void showBookingDetail(HttpServletRequest request, HttpServletResponse response) 
+
+    private void showBookingDetail(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String idStr = request.getParameter("id");
         int bookingId = Integer.parseInt(idStr);
-        
+
         Booking booking = bookingService.getById(bookingId);
         if (booking == null) {
             request.getSession().setAttribute("errorMessage", "Booking not found!");
             response.sendRedirect(request.getContextPath() + "/admin/bookings");
             return;
         }
-        
+
         Room room = roomRepository.getById(booking.getRoomId());
-        
+
         request.setAttribute("booking", booking);
         request.setAttribute("room", room);
         request.setAttribute("pageTitle", "Booking Details #" + bookingId);
@@ -83,44 +85,77 @@ public class BookingController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/admin/layout/admin-layout.jsp")
                 .forward(request, response);
     }
-    
-    private void showInvoice(HttpServletRequest request, HttpServletResponse response) 
+
+    private void showInvoice(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String idStr = request.getParameter("id");
         int bookingId = Integer.parseInt(idStr);
-        
+
         Booking booking = bookingService.getById(bookingId);
         if (booking == null) {
             request.getSession().setAttribute("errorMessage", "Booking not found!");
             response.sendRedirect(request.getContextPath() + "/admin/bookings");
             return;
         }
-        
+
         Room room = roomRepository.getById(booking.getRoomId());
-        
+
         // Generate invoice data
         String invoiceNumber = "INVOICE-" + bookingId;
         String issueDate = java.time.LocalDate.now().toString();
-        
+
         request.setAttribute("booking", booking);
         request.setAttribute("room", room);
         request.setAttribute("invoiceNumber", invoiceNumber);
         request.setAttribute("issueDate", issueDate);
-        
+
         // Direct to invoice JSP (no layout - for printing)
         request.getRequestDispatcher("/WEB-INF/views/admin/booking_management/booking-invoice.jsp")
                 .forward(request, response);
     }
-    
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+
+    private void showEditForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+        String idStr = request.getParameter("id");
+        int bookingId = Integer.parseInt(idStr);
+
+        Booking booking = bookingService.getById(bookingId);
+        if (booking == null) {
+            request.getSession().setAttribute("errorMessage", "Booking not found!");
+            response.sendRedirect(request.getContextPath() + "/admin/bookings");
+            return;
+        }
+
+        // Check if booking can be edited
+        if (!booking.canBeEdited()) {
+            request.getSession().setAttribute("errorMessage",
+                    "Cannot edit this booking. Booking must be PENDING or CONFIRMED (before check-in date).");
+            response.sendRedirect(request.getContextPath() + "/admin/bookings?action=detail&id=" + bookingId);
+            return;
+        }
+
+        // Get available rooms for dropdown
+        List<Room> rooms = roomRepository.getAvailableRooms();
+
+        request.setAttribute("booking", booking);
+        request.setAttribute("rooms", rooms);
+        request.setAttribute("pageTitle", "Edit Booking #" + bookingId);
+        request.setAttribute("contentPage", "booking_management/booking-edit.jsp");
+        request.getRequestDispatcher("/WEB-INF/views/admin/layout/admin-layout.jsp")
+                .forward(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
         String action = request.getParameter("action");
-        
+
         try {
             if ("create".equals(action)) {
                 handleCreateBooking(request, response);
+            } else if ("update".equals(action)) {
+                handleUpdateBooking(request, response);
             } else {
                 handleBookingActions(request, response);
             }
@@ -130,8 +165,8 @@ public class BookingController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/admin/bookings");
         }
     }
-    
-    private void handleCreateBooking(HttpServletRequest request, HttpServletResponse response) 
+
+    private void handleCreateBooking(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         try {
             // Parse form data
@@ -140,72 +175,141 @@ public class BookingController extends HttpServlet {
             int roomId = Integer.parseInt(request.getParameter("roomId"));
             String checkInStr = request.getParameter("checkInDate");
             String checkOutStr = request.getParameter("checkOutDate");
-            
+
             // Parse dates
             java.time.LocalDate checkIn = java.time.LocalDate.parse(checkInStr);
             java.time.LocalDate checkOut = java.time.LocalDate.parse(checkOutStr);
-            
+
             // Calculate total price
             Room room = roomRepository.getById(roomId);
             int nights = (int) java.time.temporal.ChronoUnit.DAYS.between(checkIn, checkOut);
             float totalPrice = room.getRoomPrice() * nights;
-            
+
             // Create booking object
-            Booking booking = new Booking(guestName, guestEmail, roomId, 
-                                         checkIn, checkOut, totalPrice, 
-                                         Booking.BookingStatus.PENDING);
-            
+            Booking booking = new Booking(guestName, guestEmail, roomId,
+                    checkIn, checkOut, totalPrice,
+                    Booking.BookingStatus.PENDING);
+
             // Save booking
             boolean success = bookingService.createBooking(booking);
-            
+
             if (success) {
-                request.getSession().setAttribute("successMessage", 
-                    "Booking created successfully for " + guestName + "!");
+                request.getSession().setAttribute("successMessage",
+                        "Booking created successfully for " + guestName + "!");
+                response.sendRedirect(request.getContextPath() + "/admin/bookings");
             } else {
-                request.getSession().setAttribute("errorMessage", 
-                    "Failed to create booking. Room may not be available for selected dates.");
+                request.getSession().setAttribute("errorMessage",
+                        "Failed to create booking! The selected room is not available for the chosen dates. Please select different dates or another room.");
+                response.sendRedirect(request.getContextPath() + "/admin/bookings?action=create");
             }
-            
-            response.sendRedirect(request.getContextPath() + "/admin/bookings");
-            
+
         } catch (Exception e) {
             e.printStackTrace();
-            request.getSession().setAttribute("errorMessage", 
-                "Error creating booking: " + e.getMessage());
+            request.getSession().setAttribute("errorMessage",
+                    "Error creating booking: " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/admin/bookings?action=create");
         }
     }
-    
-    private void handleBookingActions(HttpServletRequest request, HttpServletResponse response) 
+
+    private void handleUpdateBooking(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        try {
+            // Parse form data
+            int bookingId = Integer.parseInt(request.getParameter("bookingId"));
+            String guestName = request.getParameter("guestName");
+            String guestEmail = request.getParameter("guestEmail");
+            int roomId = Integer.parseInt(request.getParameter("roomId"));
+            String checkInStr = request.getParameter("checkInDate");
+            String checkOutStr = request.getParameter("checkOutDate");
+
+            // Parse dates
+            java.time.LocalDate checkIn = java.time.LocalDate.parse(checkInStr);
+            java.time.LocalDate checkOut = java.time.LocalDate.parse(checkOutStr);
+
+            // Calculate total price
+            Room room = roomRepository.getById(roomId);
+            int nights = (int) java.time.temporal.ChronoUnit.DAYS.between(checkIn, checkOut);
+            float totalPrice = room.getRoomPrice() * nights;
+
+            // Get existing booking to preserve status
+            Booking existingBooking = bookingService.getById(bookingId);
+            if (existingBooking == null) {
+                request.getSession().setAttribute("errorMessage", "Booking not found!");
+                response.sendRedirect(request.getContextPath() + "/admin/bookings");
+                return;
+            }
+
+            // Create updated booking object
+            Booking updatedBooking = new Booking(
+                    guestName, guestEmail, roomId,
+                    checkIn, checkOut, totalPrice,
+                    existingBooking.getStatus()  // Preserve existing status
+            );
+            updatedBooking.setBookingId(bookingId);
+
+            // Update booking via service
+            boolean success = bookingService.updateBooking(updatedBooking);
+
+            if (success) {
+                request.getSession().setAttribute("successMessage",
+                        "Booking #" + bookingId + " updated successfully!");
+                response.sendRedirect(request.getContextPath() + "/admin/bookings?action=detail&id=" + bookingId);
+            } else {
+                request.getSession().setAttribute("errorMessage",
+                        "Failed to update booking! Possible reasons: Room not available for selected dates, Check-in date is in the past, or Booking cannot be edited (check status/check-in date).");
+                response.sendRedirect(request.getContextPath() + "/admin/bookings?action=edit&id=" + bookingId);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            String bookingId = request.getParameter("bookingId");
+            request.getSession().setAttribute("errorMessage",
+                    "Error updating booking: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/admin/bookings?action=edit&id=" + bookingId);
+        }
+    }
+
+    private void handleBookingActions(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         String bookingIdStr = request.getParameter("id");
         String action = request.getParameter("action");
-        
+
         try {
             int bookingId = Integer.parseInt(bookingIdStr);
             boolean success = false;
             String successMessage = "";
             String errorMessage = "";
-            
+
             switch (action) {
                 case "approve":
                     success = bookingService.approveBooking(bookingId);
                     successMessage = "Booking #" + bookingId + " approved successfully!";
                     errorMessage = "Failed to approve booking. It may not be PENDING or room is no longer available.";
                     break;
-                    
+
                 case "cancel":
                     success = bookingService.cancelBooking(bookingId);
                     successMessage = "Booking #" + bookingId + " cancelled successfully!";
                     errorMessage = "Failed to cancel booking. It may already be completed or cancelled.";
                     break;
-                    
+
                 case "complete":
                     success = bookingService.completeBooking(bookingId);
                     successMessage = "Booking #" + bookingId + " marked as completed!";
                     errorMessage = "Failed to complete booking. It must be CONFIRMED first.";
                     break;
-                    
+                case "approveCancelRequest":
+                    success = bookingService.approveCancelRequest(bookingId);
+                    successMessage = "Cancel request approved! Booking #" + bookingId + " cancelled.";
+                    errorMessage = "Failed to approve. Must be CANCELLED_REQUEST status.";
+                    break;
+
+                case "rejectCancelRequest":
+                    success = bookingService.rejectCancelRequest(bookingId);
+                    successMessage = "Cancel request rejected! Booking #" + bookingId + " returned to PENDING.";
+                    errorMessage = "Failed to reject. Must be CANCELLED_REQUEST status.";
+                    break;
+
                 default:
                     errorMessage = "Unknown action: " + action;
             }
@@ -217,7 +321,7 @@ public class BookingController extends HttpServlet {
             }
 
             response.sendRedirect(request.getContextPath() + "/admin/bookings");
-            
+
         } catch (NumberFormatException e) {
             request.getSession().setAttribute("errorMessage", "Invalid booking ID");
             response.sendRedirect(request.getContextPath() + "/admin/bookings");
