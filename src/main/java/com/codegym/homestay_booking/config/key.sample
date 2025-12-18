@@ -1,0 +1,10 @@
+# Sample API Key Configuration File
+# Copy this file and fill in your actual keys
+
+# Gemini API Key
+gemini.api.key=YOUR_GEMINI_API_KEY_HERE
+
+# Instructions:
+# 1. Get your Gemini API key from: https://aistudio.google.com/app/apikey
+# 2. Replace YOUR_GEMINI_API_KEY_HERE with your actual key
+# 3. Do NOT commit this file to version control
