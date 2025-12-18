@@ -1,6 +1,10 @@
 package com.codegym.homestay_booking.repository;
 
 import com.codegym.homestay_booking.entity.Booking;
+import com.codegym.homestay_booking.dto.RevenueData;
+import com.codegym.homestay_booking.dto.StatusCount;
+import com.codegym.homestay_booking.dto.MonthlyBooking;
+import com.codegym.homestay_booking.dto.RoomBookingCount;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -256,5 +260,176 @@ public class BookingRepository {
             e.printStackTrace();
         }
         return bookings;
+    }
+    
+    // Dashboard Statistics Methods
+    
+    public int countAllBookings() {
+        String sql = "SELECT COUNT(*) FROM booking";
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    public int countByStatus(Booking.BookingStatus status) {
+        String sql = "SELECT COUNT(*) FROM booking WHERE status = ?";
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql)) {
+            ps.setString(1, status.toString());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    public double sumTotalRevenue() {
+        String sql = "SELECT SUM(total_price) FROM booking WHERE status IN ('CONFIRMED', 'COMPLETED')";
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getDouble(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    public double sumRevenueByMonth(int month, int year) {
+        String sql = "SELECT SUM(total_price) FROM booking " +
+                    "WHERE status IN ('CONFIRMED', 'COMPLETED') " +
+                    "AND MONTH(check_in_date) = ? AND YEAR(check_in_date) = ?";
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, month);
+            ps.setInt(2, year);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getDouble(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    public List<Booking> getRecentBookings(int limit) {
+        String sql = "SELECT * FROM booking ORDER BY booking_id DESC LIMIT ?";
+        List<Booking> bookings = new ArrayList<>();
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                bookings.add(mapResultSetToBooking(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return bookings;
+    }
+    
+    public List<RevenueData> getRevenueTrend(int days) {
+        String sql = "SELECT DATE(check_in_date) AS booking_date, SUM(total_price) AS daily_revenue " +
+                    "FROM booking " +
+                    "WHERE status IN ('CONFIRMED', 'COMPLETED') " +
+                    "AND check_in_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY) " +
+                    "GROUP BY DATE(check_in_date) " +
+                    "ORDER BY booking_date ASC";
+        List<RevenueData> revenueData = new ArrayList<>();
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, days);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                RevenueData data = new RevenueData();
+                data.setDate(rs.getString("booking_date"));
+                data.setRevenue(rs.getDouble("daily_revenue"));
+                revenueData.add(data);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return revenueData;
+    }
+    
+    public List<StatusCount> getStatusDistribution() {
+        String sql = "SELECT status, COUNT(*) AS total FROM booking GROUP BY status";
+        List<StatusCount> statusCounts = new ArrayList<>();
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                StatusCount sc = new StatusCount();
+                sc.setStatus(rs.getString("status"));
+                sc.setCount(rs.getInt("total"));
+                statusCounts.add(sc);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return statusCounts;
+    }
+    
+    public List<MonthlyBooking> getMonthlyBookings() {
+        String sql = "SELECT MONTH(check_in_date) AS month, COUNT(*) AS total " +
+                    "FROM booking " +
+                    "WHERE YEAR(check_in_date) = YEAR(CURDATE()) " +
+                    "GROUP BY MONTH(check_in_date) ORDER BY month";
+        List<MonthlyBooking> monthlyBookings = new ArrayList<>();
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                MonthlyBooking mb = new MonthlyBooking();
+                mb.setMonth(rs.getInt("month"));
+                mb.setCount(rs.getInt("total"));
+                monthlyBookings.add(mb);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return monthlyBookings;
+    }
+    
+    public List<RoomBookingCount> getTopRooms(int limit) {
+        String sql = "SELECT room_id, COUNT(*) AS total_bookings " +
+                    "FROM booking " +
+                    "WHERE status IN ('CONFIRMED', 'COMPLETED') " +
+                    "GROUP BY room_id " +
+                    "ORDER BY total_bookings DESC LIMIT ?";
+        List<RoomBookingCount> topRooms = new ArrayList<>();
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                RoomBookingCount rbc = new RoomBookingCount();
+                rbc.setRoomId(rs.getInt("room_id"));
+                rbc.setBookingCount(rs.getInt("total_bookings"));
+                topRooms.add(rbc);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return topRooms;
+    }
+    
+    public double getAverageStayDuration() {
+        String sql = "SELECT AVG(DATEDIFF(check_out_date, check_in_date)) AS avg_nights " +
+                    "FROM booking " +
+                    "WHERE status IN ('CONFIRMED', 'COMPLETED')";
+        try (PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getDouble("avg_nights");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 }

@@ -6,6 +6,12 @@
                 <h6 class="text-muted text-uppercase small mb-3">Management</h6>
                 <ul class="nav flex-column">
                     <li class="nav-item mb-2">
+                        <a class="nav-link ${pageContext.request.requestURI.contains('/admin/dashboard') || pageContext.request.requestURI.endsWith('/admin') ? 'active' : ''} rounded"
+                            href="${pageContext.request.contextPath}/admin/dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
                         <a class="nav-link ${pageContext.request.requestURI.contains('/admin/rooms') ? 'active' : ''} rounded"
                             href="${pageContext.request.contextPath}/admin/rooms">
                             <i class="bi bi-door-open"></i> Room Management
@@ -23,12 +29,6 @@
 
                 <h6 class="text-muted text-uppercase small mb-3">Statistics</h6>
                 <ul class="nav flex-column">
-                    <li class="nav-item mb-2">
-                        <a class="nav-link text-dark rounded" href="#">
-                            <i class="bi bi-bar-chart"></i> Dashboard
-                            <span class="badge bg-secondary ms-2">Soon</span>
-                        </a>
-                    </li>
                     <li class="nav-item mb-2">
                         <a class="nav-link text-dark rounded" href="#">
                             <i class="bi bi-graph-up"></i> Reports
