@@ -21,6 +21,30 @@ public class BookingRepository {
 
     private static final String SELECT_ALL =
             "SELECT * FROM booking ORDER BY booking_id DESC";
+    
+    private static final String SELECT_ALL_PAGINATED =
+            "SELECT * FROM booking ORDER BY booking_id DESC LIMIT ? OFFSET ?";
+    
+    private static final String COUNT_ALL =
+            "SELECT COUNT(*) FROM booking";
+    
+    private static final String SEARCH_PAGINATED =
+            "SELECT * FROM booking WHERE (guest_name LIKE ? OR guest_email LIKE ?) ORDER BY booking_id DESC LIMIT ? OFFSET ?";
+    
+    private static final String COUNT_SEARCH =
+            "SELECT COUNT(*) FROM booking WHERE (guest_name LIKE ? OR guest_email LIKE ?)";
+    
+    private static final String FILTER_BY_STATUS_PAGINATED =
+            "SELECT * FROM booking WHERE status = ? ORDER BY booking_id DESC LIMIT ? OFFSET ?";
+    
+    private static final String COUNT_BY_STATUS_FILTER =
+            "SELECT COUNT(*) FROM booking WHERE status = ?";
+    
+    private static final String SEARCH_WITH_STATUS_PAGINATED =
+            "SELECT * FROM booking WHERE status = ? AND (guest_name LIKE ? OR guest_email LIKE ?) ORDER BY booking_id DESC LIMIT ? OFFSET ?";
+    
+    private static final String COUNT_SEARCH_WITH_STATUS =
+            "SELECT COUNT(*) FROM booking WHERE status = ? AND (guest_name LIKE ? OR guest_email LIKE ?)";
 
     private static final String SELECT_BY_ID =
             "SELECT * FROM booking WHERE booking_id = ?";
@@ -100,6 +124,146 @@ public class BookingRepository {
         }
         return bookings;
     }
+    
+    public List<Booking> getPaginated(int page, int pageSize) {
+        List<Booking> bookings = new ArrayList<>();
+        int offset = (page - 1) * pageSize;
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(SELECT_ALL_PAGINATED);
+            ps.setInt(1, pageSize);
+            ps.setInt(2, offset);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                bookings.add(mapResultSetToBooking(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return bookings;
+    }
+    
+    public int getTotalCount() {
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(COUNT_ALL);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    // Search with pagination
+    public List<Booking> searchPaginated(String keyword, int page, int pageSize) {
+        List<Booking> bookings = new ArrayList<>();
+        int offset = (page - 1) * pageSize;
+        String searchPattern = "%" + keyword + "%";
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(SEARCH_PAGINATED);
+            ps.setString(1, searchPattern);
+            ps.setString(2, searchPattern);
+            ps.setInt(3, pageSize);
+            ps.setInt(4, offset);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                bookings.add(mapResultSetToBooking(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return bookings;
+    }
+    
+    public int countSearch(String keyword) {
+        String searchPattern = "%" + keyword + "%";
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(COUNT_SEARCH);
+            ps.setString(1, searchPattern);
+            ps.setString(2, searchPattern);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    // Filter by status with pagination
+    public List<Booking> filterByStatusPaginated(Booking.BookingStatus status, int page, int pageSize) {
+        List<Booking> bookings = new ArrayList<>();
+        int offset = (page - 1) * pageSize;
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(FILTER_BY_STATUS_PAGINATED);
+            ps.setString(1, status.toString());
+            ps.setInt(2, pageSize);
+            ps.setInt(3, offset);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                bookings.add(mapResultSetToBooking(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return bookings;
+    }
+    
+    public int countByStatusFilter(Booking.BookingStatus status) {
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(COUNT_BY_STATUS_FILTER);
+            ps.setString(1, status.toString());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    // Search with status filter and pagination
+    public List<Booking> searchWithStatusPaginated(Booking.BookingStatus status, String keyword, int page, int pageSize) {
+        List<Booking> bookings = new ArrayList<>();
+        int offset = (page - 1) * pageSize;
+        String searchPattern = "%" + keyword + "%";
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(SEARCH_WITH_STATUS_PAGINATED);
+            ps.setString(1, status.toString());
+            ps.setString(2, searchPattern);
+            ps.setString(3, searchPattern);
+            ps.setInt(4, pageSize);
+            ps.setInt(5, offset);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                bookings.add(mapResultSetToBooking(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return bookings;
+    }
+    
+    public int countSearchWithStatus(Booking.BookingStatus status, String keyword) {
+        String searchPattern = "%" + keyword + "%";
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(COUNT_SEARCH_WITH_STATUS);
+            ps.setString(1, status.toString());
+            ps.setString(2, searchPattern);
+            ps.setString(3, searchPattern);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
     public Booking getById(int id) {
         try {
             PreparedStatement ps = BaseRepository.getConnection().prepareStatement(SELECT_BY_ID);

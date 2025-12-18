@@ -30,6 +30,8 @@ dependencies {
     implementation("javax.servlet:jstl:1.2")
     // https://mvnrepository.com/artifact/com.mysql/mysql-connector-j
     implementation("com.mysql:mysql-connector-j:9.5.0")
+    // https://mvnrepository.com/artifact/org.json/json
+    implementation("org.json:json:20230227")
 }
 
 test {

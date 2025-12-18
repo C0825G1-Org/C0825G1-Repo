@@ -2,6 +2,7 @@ package com.codegym.homestay_booking.controller.admin;
 
 import com.codegym.homestay_booking.entity.Booking;
 import com.codegym.homestay_booking.entity.Room;
+import com.codegym.homestay_booking.repository.BookingRepository;
 import com.codegym.homestay_booking.repository.RoomRepository;
 import com.codegym.homestay_booking.service.BookingService;
 
@@ -46,8 +47,91 @@ public class BookingController extends HttpServlet {
 
     private void showBookingList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        List<Booking> bookings = bookingService.getAll();
+        
+        // Pagination settings
+        int pageSize = 10;
+        int currentPage = 1;
+        
+        String pageParam = request.getParameter("page");
+        if (pageParam != null && !pageParam.isEmpty()) {
+            try {
+                currentPage = Integer.parseInt(pageParam);
+                if (currentPage < 1) currentPage = 1;
+            } catch (NumberFormatException e) {
+                currentPage = 1;
+            }
+        }
+        
+        // Filter and search parameters
+        String statusFilter = request.getParameter("status");
+        String searchKeyword = request.getParameter("search");
+        
+        // Clean up parameters
+        if (statusFilter != null && statusFilter.isEmpty()) statusFilter = null;
+        if (searchKeyword != null && searchKeyword.trim().isEmpty()) searchKeyword = null;
+        else if (searchKeyword != null) searchKeyword = searchKeyword.trim();
+        
+        // Get bookings based on filter/search combination
+        BookingRepository bookingRepository = new BookingRepository();
+        List<Booking> bookings;
+        int totalBookings;
+        
+        if (statusFilter != null && searchKeyword != null) {
+            // Both status filter and search
+            Booking.BookingStatus status = Booking.BookingStatus.valueOf(statusFilter);
+            bookings = bookingRepository.searchWithStatusPaginated(status, searchKeyword, currentPage, pageSize);
+            totalBookings = bookingRepository.countSearchWithStatus(status, searchKeyword);
+        } else if (statusFilter != null) {
+            // Only status filter
+            Booking.BookingStatus status = Booking.BookingStatus.valueOf(statusFilter);
+            bookings = bookingRepository.filterByStatusPaginated(status, currentPage, pageSize);
+            totalBookings = bookingRepository.countByStatusFilter(status);
+        } else if (searchKeyword != null) {
+            // Only search
+            bookings = bookingRepository.searchPaginated(searchKeyword, currentPage, pageSize);
+            totalBookings = bookingRepository.countSearch(searchKeyword);
+        } else {
+            // No filter, no search - get all paginated
+            bookings = bookingRepository.getPaginated(currentPage, pageSize);
+            totalBookings = bookingRepository.getTotalCount();
+        }
+        
+        int totalPages = (int) Math.ceil((double) totalBookings / pageSize);
+        if (totalPages == 0) totalPages = 1;
+        
+        // Ensure currentPage doesn't exceed totalPages
+        if (currentPage > totalPages && totalPages > 0) {
+            currentPage = totalPages;
+            // Re-fetch with corrected page
+            if (statusFilter != null && searchKeyword != null) {
+                Booking.BookingStatus status = Booking.BookingStatus.valueOf(statusFilter);
+                bookings = bookingRepository.searchWithStatusPaginated(status, searchKeyword, currentPage, pageSize);
+            } else if (statusFilter != null) {
+                Booking.BookingStatus status = Booking.BookingStatus.valueOf(statusFilter);
+                bookings = bookingRepository.filterByStatusPaginated(status, currentPage, pageSize);
+            } else if (searchKeyword != null) {
+                bookings = bookingRepository.searchPaginated(searchKeyword, currentPage, pageSize);
+            } else {
+                bookings = bookingRepository.getPaginated(currentPage, pageSize);
+            }
+        }
+        
         request.setAttribute("bookings", bookings);
+        request.setAttribute("currentPage", currentPage);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalBookings", totalBookings);
+        request.setAttribute("pageSize", pageSize);
+        request.setAttribute("statusFilter", statusFilter);
+        request.setAttribute("searchKeyword", searchKeyword);
+        
+        // System-wide statistics (not affected by filters/pagination)
+        request.setAttribute("allPendingCount", bookingRepository.countByStatus(Booking.BookingStatus.PENDING));
+        request.setAttribute("allConfirmedCount", bookingRepository.countByStatus(Booking.BookingStatus.CONFIRMED));
+        request.setAttribute("allCancelledCount", bookingRepository.countByStatus(Booking.BookingStatus.CANCELLED));
+        request.setAttribute("allCompletedCount", bookingRepository.countByStatus(Booking.BookingStatus.COMPLETED));
+        request.setAttribute("allCancelRequestCount", bookingRepository.countByStatus(Booking.BookingStatus.CANCELLED_REQUEST));
+        request.setAttribute("allBookingsCount", bookingRepository.getTotalCount());
+        
         request.setAttribute("pageTitle", "Booking Management");
         request.setAttribute("contentPage", "booking_management/booking-list.jsp");
         request.getRequestDispatcher("/WEB-INF/views/admin/layout/admin-layout.jsp")

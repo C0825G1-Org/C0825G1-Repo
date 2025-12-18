@@ -32,89 +32,86 @@
                     </a>
                 </div>
                 <div class="d-flex gap-2">
-                    <!-- Filter by Status -->
-                    <select class="form-select" style="width: 200px;" onchange="filterByStatus(this.value)">
-                        <option value="">All Status</option>
-                        <option value="PENDING">Pending</option>
-                        <option value="CONFIRMED">Confirmed</option>
-                        <option value="CANCELLED">Cancelled</option>
-                        <option value="COMPLETED">Completed</option>
-                        <option value="CANCELLED_REQUEST">Cancel Request</option>
-                    </select>
+                    <!-- Filter and Search Form -->
+                    <form action="${pageContext.request.contextPath}/admin/bookings" method="get" class="d-flex gap-2">
+                        <!-- Filter by Status -->
+                        <select class="form-select" style="width: 200px;" name="status" onchange="this.form.submit()">
+                            <option value="">All Status</option>
+                            <option value="PENDING" ${statusFilter=='PENDING' ? 'selected' : '' }>Pending</option>
+                            <option value="CONFIRMED" ${statusFilter=='CONFIRMED' ? 'selected' : '' }>Confirmed</option>
+                            <option value="CANCELLED" ${statusFilter=='CANCELLED' ? 'selected' : '' }>Cancelled</option>
+                            <option value="COMPLETED" ${statusFilter=='COMPLETED' ? 'selected' : '' }>Completed</option>
+                            <option value="CANCELLED_REQUEST" ${statusFilter=='CANCELLED_REQUEST' ? 'selected' : '' }>
+                                Cancel Request</option>
+                        </select>
 
-                    <!-- Search -->
-                    <div class="input-group" style="width: 300px;">
-                        <input type="text" class="form-control" placeholder="Search by guest email..." id="searchInput">
-                        <button class="btn btn-outline-secondary" type="button">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
+                        <!-- Search -->
+                        <div class="input-group" style="width: 300px;">
+                            <input type="text" class="form-control" placeholder="Search by name or email..."
+                                name="search" value="${searchKeyword}">
+                            <button class="btn btn-outline-secondary" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+
+                        <!-- Clear Filters -->
+                        <c:if test="${not empty statusFilter || not empty searchKeyword}">
+                            <a href="${pageContext.request.contextPath}/admin/bookings" class="btn btn-outline-danger"
+                                title="Clear Filters">
+                                <i class="bi bi-x-circle"></i>
+                            </a>
+                        </c:if>
+                    </form>
                 </div>
             </div>
 
-            <!-- Statistics Cards -->
+            <!-- Statistics Cards (System-wide) -->
             <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card bg-warning text-white">
-                        <div class="card-body">
-                            <h6 class="card-title">Pending</h6>
-                            <h3 class="mb-0">
-                                <c:set var="pendingCount" value="0" />
-                                <c:forEach var="booking" items="${bookings}">
-                                    <c:if test="${booking.status == 'PENDING'}">
-                                        <c:set var="pendingCount" value="${pendingCount + 1}" />
-                                    </c:if>
-                                </c:forEach>
-                                ${pendingCount}
-                            </h3>
+                <div class="col-md-2">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title mb-1">Total</h6>
+                            <h3 class="mb-0">${allBookingsCount}</h3>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <div class="card bg-warning text-dark">
+                        <div class="card-body text-center">
+                            <h6 class="card-title mb-1">Pending</h6>
+                            <h3 class="mb-0">${allPendingCount}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
                     <div class="card bg-success text-white">
-                        <div class="card-body">
-                            <h6 class="card-title">Confirmed</h6>
-                            <h3 class="mb-0">
-                                <c:set var="confirmedCount" value="0" />
-                                <c:forEach var="booking" items="${bookings}">
-                                    <c:if test="${booking.status == 'CONFIRMED'}">
-                                        <c:set var="confirmedCount" value="${confirmedCount + 1}" />
-                                    </c:if>
-                                </c:forEach>
-                                ${confirmedCount}
-                            </h3>
+                        <div class="card-body text-center">
+                            <h6 class="card-title mb-1">Confirmed</h6>
+                            <h3 class="mb-0">${allConfirmedCount}</h3>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card bg-danger text-white">
-                        <div class="card-body">
-                            <h6 class="card-title">Cancelled</h6>
-                            <h3 class="mb-0">
-                                <c:set var="cancelledCount" value="0" />
-                                <c:forEach var="booking" items="${bookings}">
-                                    <c:if test="${booking.status == 'CANCELLED'}">
-                                        <c:set var="cancelledCount" value="${cancelledCount + 1}" />
-                                    </c:if>
-                                </c:forEach>
-                                ${cancelledCount}
-                            </h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="card bg-info text-white">
-                        <div class="card-body">
-                            <h6 class="card-title">Completed</h6>
-                            <h3 class="mb-0">
-                                <c:set var="completedCount" value="0" />
-                                <c:forEach var="booking" items="${bookings}">
-                                    <c:if test="${booking.status == 'COMPLETED'}">
-                                        <c:set var="completedCount" value="${completedCount + 1}" />
-                                    </c:if>
-                                </c:forEach>
-                                ${completedCount}
-                            </h3>
+                        <div class="card-body text-center">
+                            <h6 class="card-title mb-1">Completed</h6>
+                            <h3 class="mb-0">${allCompletedCount}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title mb-1">Cancelled</h6>
+                            <h3 class="mb-0">${allCancelledCount}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title mb-1">Cancel Req</h6>
+                            <h3 class="mb-0">${allCancelRequestCount}</h3>
                         </div>
                     </div>
                 </div>
@@ -268,62 +265,69 @@
                             </table>
                         </div>
 
-                        <!-- Pagination info -->
-                        <div class="mt-3 text-muted">
-                            Showing <strong>${bookings.size()}</strong> booking(s)
+                        <!-- Pagination -->
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="text-muted">
+                                Showing <strong>${(currentPage - 1) * pageSize + 1}</strong> -
+                                <strong>${(currentPage - 1) * pageSize + bookings.size()}</strong>
+                                of <strong>${totalBookings}</strong> bookings
+                            </div>
+
+                            <c:if test="${totalPages > 1}">
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination mb-0">
+                                        <!-- Previous Button -->
+                                        <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                                            <a class="page-link"
+                                                href="${pageContext.request.contextPath}/admin/bookings?page=${currentPage - 1}${not empty statusFilter ? '&status='.concat(statusFilter) : ''}${not empty searchKeyword ? '&search='.concat(searchKeyword) : ''}">
+                                                <i class="bi bi-chevron-left"></i> Previous
+                                            </a>
+                                        </li>
+
+                                        <!-- Page Numbers -->
+                                        <c:forEach begin="1" end="${totalPages}" var="pageNum">
+                                            <c:choose>
+                                                <c:when
+                                                    test="${totalPages <= 7 || pageNum == 1 || pageNum == totalPages || (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)}">
+                                                    <li class="page-item ${pageNum == currentPage ? 'active' : ''}">
+                                                        <a class="page-link"
+                                                            href="${pageContext.request.contextPath}/admin/bookings?page=${pageNum}${not empty statusFilter ? '&status='.concat(statusFilter) : ''}${not empty searchKeyword ? '&search='.concat(searchKeyword) : ''}">${pageNum}</a>
+                                                    </li>
+                                                </c:when>
+                                                <c:when
+                                                    test="${pageNum == currentPage - 3 || pageNum == currentPage + 3}">
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link">...</span>
+                                                    </li>
+                                                </c:when>
+                                            </c:choose>
+                                        </c:forEach>
+
+                                        <!-- Next Button -->
+                                        <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                                            <a class="page-link"
+                                                href="${pageContext.request.contextPath}/admin/bookings?page=${currentPage + 1}${not empty statusFilter ? '&status='.concat(statusFilter) : ''}${not empty searchKeyword ? '&search='.concat(searchKeyword) : ''}">
+                                                Next <i class="bi bi-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </c:if>
                         </div>
                     </c:if>
                 </div>
             </div>
 
-            <!-- JavaScript for filter and search -->
-            <script>
-                // Filter by status function
-                function filterByStatus(status) {
-                    const rows = document.querySelectorAll('#bookingsTable tbody tr');
-                    rows.forEach(row => {
-                        if (status === '') {
-                            row.style.display = '';
-                        } else {
-                            // Get status from the row's data attribute or badge text
-                            const statusCell = row.cells[8]; // Status column
-                            const statusBadge = statusCell.querySelector('.badge');
-                            const statusText = statusBadge ? statusBadge.textContent.trim() : '';
-
-                            // Map display text to enum value for comparison
-                            const statusMap = {
-                                'PENDING': 'PENDING',
-                                'CONFIRMED': 'CONFIRMED',
-                                'CANCELLED': 'CANCELLED',
-                                'COMPLETED': 'COMPLETED',
-                                'CANCEL REQUEST': 'CANCELLED_REQUEST'
-                            };
-
-                            const actualStatus = statusMap[statusText] || statusText;
-
-                            if (actualStatus === status) {
-                                row.style.display = '';
-                            } else {
-                                row.style.display = 'none';
-                            }
-                        }
-                    });
-                }
-
-                // Search functionality
-                document.getElementById('searchInput').addEventListener('input', function (e) {
-                    const searchTerm = e.target.value.toLowerCase();
-                    const rows = document.querySelectorAll('#bookingsTable tbody tr');
-
-                    rows.forEach(row => {
-                        const email = row.cells[2].textContent.toLowerCase();
-                        const guestName = row.cells[1].textContent.toLowerCase();
-
-                        if (email.includes(searchTerm) || guestName.includes(searchTerm)) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    });
-                });
-            </script>
+            <!-- Filter info message -->
+            <c:if test="${not empty statusFilter || not empty searchKeyword}">
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="bi bi-funnel"></i>
+                    <strong>Filtered:</strong>
+                    <c:if test="${not empty statusFilter}"> Status = ${statusFilter}</c:if>
+                    <c:if test="${not empty statusFilter && not empty searchKeyword}"> | </c:if>
+                    <c:if test="${not empty searchKeyword}"> Search = "${searchKeyword}"</c:if>
+                    <a href="${pageContext.request.contextPath}/admin/bookings" class="ms-2">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </a>
+                </div>
+            </c:if>
