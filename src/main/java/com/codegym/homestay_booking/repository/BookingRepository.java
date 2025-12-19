@@ -155,6 +155,139 @@ public class BookingRepository {
         return 0;
     }
     
+    /**
+     * Flexible filter method supporting all combinations of filters
+     */
+    public List<Booking> filterBookings(String status, String search, 
+            LocalDate checkInFrom, LocalDate checkInTo,
+            LocalDate checkOutFrom, LocalDate checkOutTo,
+            Integer roomId,
+            int page, int pageSize) {
+        
+        List<Booking> bookings = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT * FROM booking WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+        
+        // Status filter
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND status = ?");
+            params.add(status);
+        }
+        
+        // Search filter (name or email)
+        if (search != null && !search.isEmpty()) {
+            sql.append(" AND (guest_name LIKE ? OR guest_email LIKE ?)");
+            String searchPattern = "%" + search + "%";
+            params.add(searchPattern);
+            params.add(searchPattern);
+        }
+        
+        // Room filter
+        if (roomId != null) {
+            sql.append(" AND room_id = ?");
+            params.add(roomId);
+        }
+        
+        // Check-in date range
+        if (checkInFrom != null) {
+            sql.append(" AND check_in_date >= ?");
+            params.add(java.sql.Date.valueOf(checkInFrom));
+        }
+        if (checkInTo != null) {
+            sql.append(" AND check_in_date <= ?");
+            params.add(java.sql.Date.valueOf(checkInTo));
+        }
+        
+        // Check-out date range
+        if (checkOutFrom != null) {
+            sql.append(" AND check_out_date >= ?");
+            params.add(java.sql.Date.valueOf(checkOutFrom));
+        }
+        if (checkOutTo != null) {
+            sql.append(" AND check_out_date <= ?");
+            params.add(java.sql.Date.valueOf(checkOutTo));
+        }
+        
+        sql.append(" ORDER BY booking_id DESC LIMIT ? OFFSET ?");
+        params.add(pageSize);
+        params.add((page - 1) * pageSize);
+        
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql.toString());
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                bookings.add(mapResultSetToBooking(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return bookings;
+    }
+    
+    /**
+     * Count filtered bookings
+     */
+    public int countFilteredBookings(String status, String search,
+            LocalDate checkInFrom, LocalDate checkInTo,
+            LocalDate checkOutFrom, LocalDate checkOutTo,
+            Integer roomId) {
+        
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM booking WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+        
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND status = ?");
+            params.add(status);
+        }
+        
+        if (search != null && !search.isEmpty()) {
+            sql.append(" AND (guest_name LIKE ? OR guest_email LIKE ?)");
+            String searchPattern = "%" + search + "%";
+            params.add(searchPattern);
+            params.add(searchPattern);
+        }
+        
+        if (roomId != null) {
+            sql.append(" AND room_id = ?");
+            params.add(roomId);
+        }
+        
+        if (checkInFrom != null) {
+            sql.append(" AND check_in_date >= ?");
+            params.add(java.sql.Date.valueOf(checkInFrom));
+        }
+        if (checkInTo != null) {
+            sql.append(" AND check_in_date <= ?");
+            params.add(java.sql.Date.valueOf(checkInTo));
+        }
+        
+        if (checkOutFrom != null) {
+            sql.append(" AND check_out_date >= ?");
+            params.add(java.sql.Date.valueOf(checkOutFrom));
+        }
+        if (checkOutTo != null) {
+            sql.append(" AND check_out_date <= ?");
+            params.add(java.sql.Date.valueOf(checkOutTo));
+        }
+        
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql.toString());
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
     // Search with pagination
     public List<Booking> searchPaginated(String keyword, int page, int pageSize) {
         List<Booking> bookings = new ArrayList<>();

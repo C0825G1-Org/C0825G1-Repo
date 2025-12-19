@@ -169,7 +169,12 @@
                                                     title="Locked for confirmed bookings"></i>
                                             </c:if>
                                         </label>
-                                        <input type="date" class="form-control" id="checkInDate" name="checkInDate"
+                                        <!-- Hidden input for disabled field (browser doesn't send disabled inputs) -->
+                                        <c:if test="${!booking.canEditCheckIn()}">
+                                            <input type="hidden" name="checkInDate" value="${booking.checkInDate}">
+                                        </c:if>
+                                        <input type="date" class="form-control" id="checkInDate" 
+                                            ${booking.canEditCheckIn() ? 'name="checkInDate"' : ''}
                                             value="${booking.checkInDate}" required ${!booking.canEditCheckIn()
                                             ? 'disabled' : '' } min="${booking.checkInDate}">
                                         <c:if test="${!booking.canEditCheckIn()}">
@@ -181,7 +186,12 @@
 
                                     <div class="col-md-6 mb-3">
                                         <label for="checkOutDate" class="form-label">Check-out Date *</label>
-                                        <input type="date" class="form-control" id="checkOutDate" name="checkOutDate"
+                                        <!-- Hidden input for disabled field -->
+                                        <c:if test="${!booking.canEditCheckOut()}">
+                                            <input type="hidden" name="checkOutDate" value="${booking.checkOutDate}">
+                                        </c:if>
+                                        <input type="date" class="form-control" id="checkOutDate" 
+                                            ${booking.canEditCheckOut() ? 'name="checkOutDate"' : ''}
                                             value="${booking.checkOutDate}" required ${!booking.canEditCheckOut()
                                             ? 'disabled' : '' } min="${booking.checkInDate}">
                                     </div>
