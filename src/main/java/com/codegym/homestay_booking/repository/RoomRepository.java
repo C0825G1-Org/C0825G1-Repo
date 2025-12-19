@@ -77,6 +77,32 @@ public class RoomRepository {
         return rooms;
     }
     
+    /**
+     * Find rooms available for booking in the given date range.
+     * Excludes rooms that have bookings with status PENDING or CONFIRMED
+     * that overlap with the requested date range.
+     */
+    public List<Room> findAvailableRooms(java.time.LocalDate checkIn, java.time.LocalDate checkOut) {
+        List<Room> rooms = new ArrayList<>();
+        String sql = "SELECT * FROM room WHERE status = 'AVAILABLE' AND room_id NOT IN (" +
+                     "  SELECT DISTINCT room_id FROM booking " +
+                     "  WHERE status IN ('PENDING', 'CONFIRMED') " +
+                     "  AND check_in_date < ? AND check_out_date > ?" +
+                     ") ORDER BY room_id";
+        try {
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(sql);
+            ps.setDate(1, java.sql.Date.valueOf(checkOut));
+            ps.setDate(2, java.sql.Date.valueOf(checkIn));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                rooms.add(mapResultSetToRoom(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return rooms;
+    }
+    
     public boolean save(Room room) {
         String sql = "INSERT INTO room (room_type, sleep_slot, room_price, status, image_url, description) VALUES (?, ?, ?, ?, ?, ?)";
         try {

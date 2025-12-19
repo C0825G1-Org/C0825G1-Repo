@@ -105,7 +105,7 @@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
-                        <i class="bi bi-lightbulb"></i> AI Business Insights
+                        <i class="bi bi-lightbulb"></i> AI Business Insights (Beta)
                     </h5>
                     <form action="${pageContext.request.contextPath}/admin/dashboard" method="get"
                         style="display:inline;">
@@ -282,7 +282,7 @@
                         labels: statusLabels,
                         datasets: [{
                             data: statusCounts,
-                            backgroundColor: ['#17A2B8', '#DC3545', '#28A745', '#6C757D', '#FFC107']
+                            backgroundColor: ['#17A2B8', '#DC3545', '#6C757D', '#28A745', '#FFC107']
                         }]
                     },
                     options: {

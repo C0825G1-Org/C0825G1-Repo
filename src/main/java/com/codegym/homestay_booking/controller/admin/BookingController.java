@@ -62,39 +62,48 @@ public class BookingController extends HttpServlet {
             }
         }
         
-        // Filter and search parameters
+        // Get filter parameters
         String statusFilter = request.getParameter("status");
         String searchKeyword = request.getParameter("search");
+        String checkInFrom = request.getParameter("checkInFrom");
+        String checkInTo = request.getParameter("checkInTo");
+        String checkOutFrom = request.getParameter("checkOutFrom");
+        String checkOutTo = request.getParameter("checkOutTo");
+        String roomIdParam = request.getParameter("roomId");
         
-        // Clean up parameters
+        // Clean up empty strings to null
         if (statusFilter != null && statusFilter.isEmpty()) statusFilter = null;
         if (searchKeyword != null && searchKeyword.trim().isEmpty()) searchKeyword = null;
         else if (searchKeyword != null) searchKeyword = searchKeyword.trim();
+        if (checkInFrom != null && checkInFrom.isEmpty()) checkInFrom = null;
+        if (checkInTo != null && checkInTo.isEmpty()) checkInTo = null;
+        if (checkOutFrom != null && checkOutFrom.isEmpty()) checkOutFrom = null;
+        if (checkOutTo != null && checkOutTo.isEmpty()) checkOutTo = null;
+        if (roomIdParam != null && roomIdParam.isEmpty()) roomIdParam = null;
         
-        // Get bookings based on filter/search combination
+        // Parse dates and roomId
+        java.time.LocalDate checkInFromDate = checkInFrom != null ? java.time.LocalDate.parse(checkInFrom) : null;
+        java.time.LocalDate checkInToDate = checkInTo != null ? java.time.LocalDate.parse(checkInTo) : null;
+        java.time.LocalDate checkOutFromDate = checkOutFrom != null ? java.time.LocalDate.parse(checkOutFrom) : null;
+        java.time.LocalDate checkOutToDate = checkOutTo != null ? java.time.LocalDate.parse(checkOutTo) : null;
+        Integer roomId = roomIdParam != null ? Integer.parseInt(roomIdParam) : null;
+        
+        // Use unified filter method
         BookingRepository bookingRepository = new BookingRepository();
-        List<Booking> bookings;
-        int totalBookings;
+        List<Booking> bookings = bookingRepository.filterBookings(
+            statusFilter, searchKeyword,
+            checkInFromDate, checkInToDate,
+            checkOutFromDate, checkOutToDate,
+            roomId,
+            currentPage, pageSize
+        );
         
-        if (statusFilter != null && searchKeyword != null) {
-            // Both status filter and search
-            Booking.BookingStatus status = Booking.BookingStatus.valueOf(statusFilter);
-            bookings = bookingRepository.searchWithStatusPaginated(status, searchKeyword, currentPage, pageSize);
-            totalBookings = bookingRepository.countSearchWithStatus(status, searchKeyword);
-        } else if (statusFilter != null) {
-            // Only status filter
-            Booking.BookingStatus status = Booking.BookingStatus.valueOf(statusFilter);
-            bookings = bookingRepository.filterByStatusPaginated(status, currentPage, pageSize);
-            totalBookings = bookingRepository.countByStatusFilter(status);
-        } else if (searchKeyword != null) {
-            // Only search
-            bookings = bookingRepository.searchPaginated(searchKeyword, currentPage, pageSize);
-            totalBookings = bookingRepository.countSearch(searchKeyword);
-        } else {
-            // No filter, no search - get all paginated
-            bookings = bookingRepository.getPaginated(currentPage, pageSize);
-            totalBookings = bookingRepository.getTotalCount();
-        }
+        int totalBookings = bookingRepository.countFilteredBookings(
+            statusFilter, searchKeyword,
+            checkInFromDate, checkInToDate,
+            checkOutFromDate, checkOutToDate,
+            roomId
+        );
         
         int totalPages = (int) Math.ceil((double) totalBookings / pageSize);
         if (totalPages == 0) totalPages = 1;
@@ -102,20 +111,16 @@ public class BookingController extends HttpServlet {
         // Ensure currentPage doesn't exceed totalPages
         if (currentPage > totalPages && totalPages > 0) {
             currentPage = totalPages;
-            // Re-fetch with corrected page
-            if (statusFilter != null && searchKeyword != null) {
-                Booking.BookingStatus status = Booking.BookingStatus.valueOf(statusFilter);
-                bookings = bookingRepository.searchWithStatusPaginated(status, searchKeyword, currentPage, pageSize);
-            } else if (statusFilter != null) {
-                Booking.BookingStatus status = Booking.BookingStatus.valueOf(statusFilter);
-                bookings = bookingRepository.filterByStatusPaginated(status, currentPage, pageSize);
-            } else if (searchKeyword != null) {
-                bookings = bookingRepository.searchPaginated(searchKeyword, currentPage, pageSize);
-            } else {
-                bookings = bookingRepository.getPaginated(currentPage, pageSize);
-            }
+            bookings = bookingRepository.filterBookings(
+                statusFilter, searchKeyword,
+                checkInFromDate, checkInToDate,
+                checkOutFromDate, checkOutToDate,
+                roomId,
+                currentPage, pageSize
+            );
         }
         
+        // Set attributes for JSP
         request.setAttribute("bookings", bookings);
         request.setAttribute("currentPage", currentPage);
         request.setAttribute("totalPages", totalPages);
@@ -123,6 +128,14 @@ public class BookingController extends HttpServlet {
         request.setAttribute("pageSize", pageSize);
         request.setAttribute("statusFilter", statusFilter);
         request.setAttribute("searchKeyword", searchKeyword);
+        request.setAttribute("checkInFrom", checkInFrom);
+        request.setAttribute("checkInTo", checkInTo);
+        request.setAttribute("checkOutFrom", checkOutFrom);
+        request.setAttribute("checkOutTo", checkOutTo);
+        request.setAttribute("roomIdFilter", roomIdParam);
+        
+        // Get all rooms for dropdown
+        request.setAttribute("allRooms", roomRepository.getAll());
         
         // System-wide statistics (not affected by filters/pagination)
         request.setAttribute("allPendingCount", bookingRepository.countByStatus(Booking.BookingStatus.PENDING));
@@ -140,8 +153,7 @@ public class BookingController extends HttpServlet {
 
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        List<Room> rooms = roomRepository.getAvailableRooms();
-        request.setAttribute("rooms", rooms);
+        // Rooms are now loaded via AJAX based on selected dates
         request.setAttribute("pageTitle", "Create New Booking");
         request.setAttribute("contentPage", "booking_management/booking-create.jsp");
         request.getRequestDispatcher("/WEB-INF/views/admin/layout/admin-layout.jsp")

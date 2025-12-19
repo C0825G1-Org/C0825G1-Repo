@@ -31,11 +31,20 @@
                         <i class="bi bi-plus-circle"></i> Create New Booking
                     </a>
                 </div>
-                <div class="d-flex gap-2">
-                    <!-- Filter and Search Form -->
-                    <form action="${pageContext.request.contextPath}/admin/bookings" method="get" class="d-flex gap-2">
-                        <!-- Filter by Status -->
-                        <select class="form-select" style="width: 200px;" name="status" onchange="this.form.submit()">
+                <div>
+                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#advancedFilters" aria-expanded="false">
+                        <i class="bi bi-funnel"></i> Advanced Filters
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Form -->
+            <form action="${pageContext.request.contextPath}/admin/bookings" method="get" id="filterForm">
+                <!-- Basic Filters Row -->
+                <div class="row mb-3 g-2">
+                    <div class="col-md-3">
+                        <select class="form-select" name="status" onchange="this.form.submit()">
                             <option value="">All Status</option>
                             <option value="PENDING" ${statusFilter=='PENDING' ? 'selected' : '' }>Pending</option>
                             <option value="CONFIRMED" ${statusFilter=='CONFIRMED' ? 'selected' : '' }>Confirmed</option>
@@ -44,26 +53,88 @@
                             <option value="CANCELLED_REQUEST" ${statusFilter=='CANCELLED_REQUEST' ? 'selected' : '' }>
                                 Cancel Request</option>
                         </select>
-
-                        <!-- Search -->
-                        <div class="input-group" style="width: 300px;">
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
                             <input type="text" class="form-control" placeholder="Search by name or email..."
                                 name="search" value="${searchKeyword}">
                             <button class="btn btn-outline-secondary" type="submit">
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>
-
-                        <!-- Clear Filters -->
-                        <c:if test="${not empty statusFilter || not empty searchKeyword}">
-                            <a href="${pageContext.request.contextPath}/admin/bookings" class="btn btn-outline-danger"
-                                title="Clear Filters">
-                                <i class="bi bi-x-circle"></i>
+                    </div>
+                    <div class="col-md-2">
+                        <c:if
+                            test="${not empty statusFilter || not empty searchKeyword || not empty checkInFrom || not empty checkInTo || not empty checkOutFrom || not empty checkOutTo || not empty roomIdFilter}">
+                            <a href="${pageContext.request.contextPath}/admin/bookings"
+                                class="btn btn-outline-danger w-100">
+                                <i class="bi bi-x-circle"></i> Clear All
                             </a>
                         </c:if>
-                    </form>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Advanced Filters (Collapsible) -->
+                <div class="collapse ${not empty checkInFrom || not empty checkInTo || not empty checkOutFrom || not empty checkOutTo || not empty roomIdFilter ? 'show' : ''}"
+                    id="advancedFilters">
+                    <div class="card card-body mb-3 bg-light">
+                        <div class="row g-3">
+                            <!-- Room Filter -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="bi bi-door-open"></i> Room</label>
+                                <select class="form-select" name="roomId">
+                                    <option value="">All Rooms</option>
+                                    <c:forEach var="room" items="${allRooms}">
+                                        <option value="${room.roomId}" ${roomIdFilter==String.valueOf(room.roomId)
+                                            ? 'selected' : '' }>
+                                            Room #${room.roomId} - ${room.roomType}
+                                        </option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+
+                            <!-- Check-in Date Range -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="bi bi-calendar-event"></i> Check-in
+                                    Range</label>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <input type="date" class="form-control" name="checkInFrom"
+                                            value="${checkInFrom}">
+                                        <small class="text-muted">From</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="date" class="form-control" name="checkInTo" value="${checkInTo}">
+                                        <small class="text-muted">To</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Check-out Date Range -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="bi bi-calendar-check"></i> Check-out
+                                    Range</label>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <input type="date" class="form-control" name="checkOutFrom"
+                                            value="${checkOutFrom}">
+                                        <small class="text-muted">From</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="date" class="form-control" name="checkOutTo" value="${checkOutTo}">
+                                        <small class="text-muted">To</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-filter"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
 
             <!-- Statistics Cards (System-wide) -->
             <div class="row mb-4">
@@ -266,6 +337,9 @@
                         </div>
 
                         <!-- Pagination -->
+                        <c:set var="filterParams"
+                            value="${not empty statusFilter ? '&status='.concat(statusFilter) : ''}${not empty searchKeyword ? '&search='.concat(searchKeyword) : ''}${not empty checkInFrom ? '&checkInFrom='.concat(checkInFrom) : ''}${not empty checkInTo ? '&checkInTo='.concat(checkInTo) : ''}${not empty checkOutFrom ? '&checkOutFrom='.concat(checkOutFrom) : ''}${not empty checkOutTo ? '&checkOutTo='.concat(checkOutTo) : ''}${not empty roomIdFilter ? '&roomId='.concat(roomIdFilter) : ''}" />
+
                         <div class="d-flex justify-content-between align-items-center mt-3">
                             <div class="text-muted">
                                 Showing <strong>${(currentPage - 1) * pageSize + 1}</strong> -
@@ -279,7 +353,7 @@
                                         <!-- Previous Button -->
                                         <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
                                             <a class="page-link"
-                                                href="${pageContext.request.contextPath}/admin/bookings?page=${currentPage - 1}${not empty statusFilter ? '&status='.concat(statusFilter) : ''}${not empty searchKeyword ? '&search='.concat(searchKeyword) : ''}">
+                                                href="${pageContext.request.contextPath}/admin/bookings?page=${currentPage - 1}${filterParams}">
                                                 <i class="bi bi-chevron-left"></i> Previous
                                             </a>
                                         </li>
@@ -291,7 +365,7 @@
                                                     test="${totalPages <= 7 || pageNum == 1 || pageNum == totalPages || (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)}">
                                                     <li class="page-item ${pageNum == currentPage ? 'active' : ''}">
                                                         <a class="page-link"
-                                                            href="${pageContext.request.contextPath}/admin/bookings?page=${pageNum}${not empty statusFilter ? '&status='.concat(statusFilter) : ''}${not empty searchKeyword ? '&search='.concat(searchKeyword) : ''}">${pageNum}</a>
+                                                            href="${pageContext.request.contextPath}/admin/bookings?page=${pageNum}${filterParams}">${pageNum}</a>
                                                     </li>
                                                 </c:when>
                                                 <c:when
@@ -306,7 +380,7 @@
                                         <!-- Next Button -->
                                         <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
                                             <a class="page-link"
-                                                href="${pageContext.request.contextPath}/admin/bookings?page=${currentPage + 1}${not empty statusFilter ? '&status='.concat(statusFilter) : ''}${not empty searchKeyword ? '&search='.concat(searchKeyword) : ''}">
+                                                href="${pageContext.request.contextPath}/admin/bookings?page=${currentPage + 1}${filterParams}">
                                                 Next <i class="bi bi-chevron-right"></i>
                                             </a>
                                         </li>
@@ -318,16 +392,30 @@
                 </div>
             </div>
 
-            <!-- Filter info message -->
-            <c:if test="${not empty statusFilter || not empty searchKeyword}">
+            <!-- Active Filters Summary -->
+            <c:if
+                test="${not empty statusFilter || not empty searchKeyword || not empty checkInFrom || not empty checkInTo || not empty checkOutFrom || not empty checkOutTo || not empty roomIdFilter}">
                 <div class="alert alert-info mt-3 mb-0">
                     <i class="bi bi-funnel"></i>
-                    <strong>Filtered:</strong>
-                    <c:if test="${not empty statusFilter}"> Status = ${statusFilter}</c:if>
-                    <c:if test="${not empty statusFilter && not empty searchKeyword}"> | </c:if>
-                    <c:if test="${not empty searchKeyword}"> Search = "${searchKeyword}"</c:if>
-                    <a href="${pageContext.request.contextPath}/admin/bookings" class="ms-2">
-                        <i class="bi bi-x-circle"></i> Clear
+                    <strong>Active Filters:</strong>
+                    <c:if test="${not empty statusFilter}">
+                        <span class="badge bg-primary ms-2">Status: ${statusFilter}</span>
+                    </c:if>
+                    <c:if test="${not empty searchKeyword}">
+                        <span class="badge bg-secondary ms-2">Search: "${searchKeyword}"</span>
+                    </c:if>
+                    <c:if test="${not empty roomIdFilter}">
+                        <span class="badge bg-info ms-2">Room: #${roomIdFilter}</span>
+                    </c:if>
+                    <c:if test="${not empty checkInFrom || not empty checkInTo}">
+                        <span class="badge bg-success ms-2">Check-in: ${checkInFrom} - ${checkInTo}</span>
+                    </c:if>
+                    <c:if test="${not empty checkOutFrom || not empty checkOutTo}">
+                        <span class="badge bg-warning text-dark ms-2">Check-out: ${checkOutFrom} - ${checkOutTo}</span>
+                    </c:if>
+                    <a href="${pageContext.request.contextPath}/admin/bookings"
+                        class="btn btn-sm btn-outline-danger ms-3">
+                        <i class="bi bi-x-circle"></i> Clear All
                     </a>
                 </div>
             </c:if>
