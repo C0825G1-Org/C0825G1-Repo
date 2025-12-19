@@ -253,18 +253,18 @@ CREATE TABLE booking (
 ### Booking Status Flow
 ```
 PENDING → CONFIRMED → COMPLETED
-    ↓         ↓
-CANCELLED ← CANCELLED_REQUEST
+    ↓        
+CANCELLED_REQUEST → CANCELLED
 ```
 
 ### Edit Rules
 
-| Status | Can Edit Dates | Can Change Room | Can Cancel |
-|--------|---------------|-----------------|------------|
-| PENDING | ✅ Both | ✅ Yes | ✅ Direct |
-| CONFIRMED | ✅ Check-out only | ❌ No | ⚠️ Request |
-| COMPLETED | ❌ No | ❌ No | ❌ No |
-| CANCELLED | ❌ No | ❌ No | ❌ No |
+| Status | Can Edit Dates | Can Change Room           | Can Cancel |
+|--------|---------------|---------------------------|------------|
+| PENDING | ✅ Both | ✅ Yes                     | ⚠️ Request |
+| CONFIRMED | ✅ Check-out only | ✅ Only before check-in    | ⚠️ Request |
+| COMPLETED | ❌ No | ❌ No                      | ❌ No |
+| CANCELLED | ❌ No | ❌ No                      | ❌ No |
 
 ### Room Availability
 ```sql
