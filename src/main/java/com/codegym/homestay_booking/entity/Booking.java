@@ -145,13 +145,14 @@ public class Booking {
     /**
      * Check if check-in date can be edited
      * PENDING: Yes
-     * CONFIRMED: No (only check-out can change)
+     * CONFIRMED: Yes (if check-in is in the future)
      */
     public boolean canEditCheckIn() {
         if (!canBeEdited()) {
             return false;
         }
-        return status == BookingStatus.PENDING;
+        // Both PENDING and CONFIRMED can edit check-in if booking is editable
+        return true;
     }
     
     /**

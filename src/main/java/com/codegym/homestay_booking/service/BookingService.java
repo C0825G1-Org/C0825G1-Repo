@@ -63,14 +63,8 @@ public class BookingService implements IBookingService {
                 return false;
             }
 
-            // 4. Validate field-level permissions
-            if (existingBooking.getStatus() == Booking.BookingStatus.CONFIRMED) {
-                // CONFIRMED: can only change check-out, not check-in
-                if (!newCheckIn.equals(existingBooking.getCheckInDate())) {
-                    connection.rollback();
-                    return false;
-                }
-            }
+            // 4. Both PENDING and CONFIRMED can now edit check-in and check-out
+            // (as long as canBeEdited() passes)
 
             // 5. Validate dates
             LocalDate today = LocalDate.now();

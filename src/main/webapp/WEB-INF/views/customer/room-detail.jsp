@@ -215,7 +215,7 @@
                         <div class="booking-card">
                             <h4 class="mb-4"><i class="bi bi-calendar-check"></i> Book Your Stay</h4>
 
-                            <form id="bookingForm" action="${pageContext.request.contextPath}/booking/create"
+                            <form id="bookingForm" action="${pageContext.request.contextPath}/payment/create"
                                 method="post">
                                 <input type="hidden" name="roomId" value="${room.roomId}">
 
@@ -261,11 +261,11 @@
                                 </div>
 
                                 <button type="submit" class="btn btn-book w-100 mt-3">
-                                    <i class="bi bi-calendar-plus"></i> Book Now
+                                    <i class="bi bi-credit-card"></i> Thanh toán & Đặt phòng
                                 </button>
 
                                 <p class="text-muted small text-center mt-3 mb-0">
-                                    <i class="bi bi-shield-check"></i> Status will be PENDING until admin confirms
+                                    <i class="bi bi-shield-check"></i> Bạn sẽ được chuyển đến VNPay để thanh toán
                                 </p>
                             </form>
                         </div>

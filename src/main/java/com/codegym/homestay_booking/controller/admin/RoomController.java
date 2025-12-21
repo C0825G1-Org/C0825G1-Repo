@@ -4,17 +4,32 @@ import com.codegym.homestay_booking.entity.Room;
 import com.codegym.homestay_booking.service.RoomService;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 @WebServlet(name = "RoomController", urlPatterns = {"/admin/rooms"})
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024,      // 1MB
+    maxFileSize = 5 * 1024 * 1024,         // 5MB
+    maxRequestSize = 10 * 1024 * 1024      // 10MB
+)
 public class RoomController extends HttpServlet {
     
     private RoomService roomService = new RoomService();
+    private static final String UPLOAD_DIR = "uploads/rooms";
+    private static final String[] ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"};
     
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -98,13 +113,15 @@ public class RoomController extends HttpServlet {
     }
     
     private void handleCreateRoom(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+            throws IOException, ServletException {
         try {
             String roomTypeStr = request.getParameter("roomType");
             int sleepSlot = Integer.parseInt(request.getParameter("sleepSlot"));
             float roomPrice = Float.parseFloat(request.getParameter("roomPrice"));
-            String imageUrl = request.getParameter("imageUrl");
             String description = request.getParameter("description");
+            
+            // Handle file upload
+            String imageUrl = handleImageUpload(request, null);
             
             Room room = new Room();
             room.setRoomType(Room.RoomType.valueOf(roomTypeStr));
@@ -133,15 +150,18 @@ public class RoomController extends HttpServlet {
     }
     
     private void handleUpdateRoom(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+            throws IOException, ServletException {
         try {
             int roomId = Integer.parseInt(request.getParameter("roomId"));
             String roomTypeStr = request.getParameter("roomType");
             int sleepSlot = Integer.parseInt(request.getParameter("sleepSlot"));
             float roomPrice = Float.parseFloat(request.getParameter("roomPrice"));
             String statusStr = request.getParameter("status");
-            String imageUrl = request.getParameter("imageUrl");
+            String existingImageUrl = request.getParameter("existingImageUrl");
             String description = request.getParameter("description");
+            
+            // Handle file upload - keep existing image if no new file
+            String imageUrl = handleImageUpload(request, existingImageUrl);
             
             Room room = new Room();
             room.setRoomId(roomId);
@@ -213,5 +233,95 @@ public class RoomController extends HttpServlet {
         }
         
         response.sendRedirect(request.getContextPath() + "/admin/rooms");
+    }
+    
+    /**
+     * Handle image file upload
+     * @param request HTTP request with multipart data
+     * @param existingImageUrl existing image URL (for edit mode, keep if no new upload)
+     * @return relative path to saved image or existing URL
+     */
+    private String handleImageUpload(HttpServletRequest request, String existingImageUrl)
+            throws IOException, ServletException {
+        
+        Part filePart = request.getPart("image");
+        
+        // Check if a file was uploaded
+        if (filePart == null || filePart.getSize() == 0) {
+            // No file uploaded - return existing or null
+            return existingImageUrl;
+        }
+        
+        // Validate content type
+        String contentType = filePart.getContentType();
+        boolean validType = false;
+        for (String allowed : ALLOWED_TYPES) {
+            if (allowed.equals(contentType)) {
+                validType = true;
+                break;
+            }
+        }
+        
+        if (!validType) {
+            throw new ServletException("Invalid file type. Only JPEG, PNG, WebP and GIF images are allowed.");
+        }
+        
+        // Get original filename and extension
+        String submittedFileName = filePart.getSubmittedFileName();
+        if (submittedFileName == null || submittedFileName.isEmpty()) {
+            return existingImageUrl;
+        }
+        
+        // Security: prevent path traversal and dangerous extensions
+        String fileName = submittedFileName.replaceAll("[^a-zA-Z0-9._-]", "_");
+        String extension = "";
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex > 0) {
+            extension = fileName.substring(dotIndex).toLowerCase();
+            fileName = fileName.substring(0, dotIndex);
+        }
+        
+        // Block dangerous extensions
+        if (extension.equals(".jsp") || extension.equals(".exe") || 
+            extension.equals(".js") || extension.equals(".php")) {
+            throw new ServletException("File type not allowed for security reasons.");
+        }
+        
+        // Generate unique filename: timestamp_originalname.ext
+        String uniqueFileName = System.currentTimeMillis() + "_" + fileName + extension;
+        
+        // Use source webapp folder for uploads (persists in source code)
+        String sourceUploadPath = "D:" + File.separator + "md4_case_study" + File.separator + 
+            "homestay_booking" + File.separator + "src" + File.separator + "main" + 
+            File.separator + "webapp" + File.separator + "uploads" + File.separator + "rooms";
+        
+        // Also save to deployed webapp for immediate serving
+        String webappPath = getServletContext().getRealPath("");
+        String webappUploadPath = webappPath + File.separator + "uploads" + File.separator + "rooms";
+        
+        // Create directories if not exist
+        File sourceDir = new File(sourceUploadPath);
+        if (!sourceDir.exists()) {
+            sourceDir.mkdirs();
+        }
+        
+        File webappDir = new File(webappUploadPath);
+        if (!webappDir.exists()) {
+            webappDir.mkdirs();
+        }
+        
+        // Save file to BOTH locations
+        // 1. Source folder (persistent) - survives redeploy
+        Path sourceFilePath = Paths.get(sourceUploadPath, uniqueFileName);
+        try (InputStream input = filePart.getInputStream()) {
+            Files.copy(input, sourceFilePath, StandardCopyOption.REPLACE_EXISTING);
+        }
+        
+        // 2. Webapp (for immediate serving)
+        Path webappFilePath = Paths.get(webappUploadPath, uniqueFileName);
+        Files.copy(sourceFilePath, webappFilePath, StandardCopyOption.REPLACE_EXISTING);
+        
+        // Return relative path for DB storage
+        return "/uploads/rooms/" + uniqueFileName;
     }
 }

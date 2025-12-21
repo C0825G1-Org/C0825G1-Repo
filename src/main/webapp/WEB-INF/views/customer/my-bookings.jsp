@@ -136,8 +136,8 @@
                 }
 
                 .status-cancelled-request {
-                    background: #FFF3CD;
-                    color: #856404;
+                    background: #F8D7DA;
+                    color: #721C24;
                 }
 
                 .btn-action {
@@ -257,7 +257,7 @@
                                                 </c:when>
                                                 <c:when test="${booking.status.toString() == 'CANCELLED_REQUEST'}">
                                                     <span class="status-badge status-cancelled-request">
-                                                        <i class="bi bi-hourglass-split"></i> Cancel Pending
+                                                        <i class="bi bi-x-circle"></i> Cancel Pending
                                                     </span>
                                                 </c:when>
                                             </c:choose>
@@ -287,9 +287,9 @@
                                                     <input type="hidden" name="id" value="${booking.bookingId}">
                                                     <input type="hidden" name="email" value="${email}">
                                                     <button type="submit"
-                                                        class="btn btn-sm btn-outline-warning btn-action"
+                                                        class="btn btn-sm btn-outline-danger btn-action"
                                                         onclick="return confirm('Request cancellation?');">
-                                                        <i class="bi bi-exclamation-circle"></i>
+                                                        <i class="bi bi-x-lg"></i>
                                                     </button>
                                                 </form>
                                             </c:if>
