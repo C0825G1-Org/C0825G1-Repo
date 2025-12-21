@@ -26,7 +26,8 @@
         <!-- Create Room Form -->
         <div class="card">
             <div class="card-body">
-                <form method="post" action="${pageContext.request.contextPath}/admin/rooms" id="roomForm">
+                <form method="post" action="${pageContext.request.contextPath}/admin/rooms" 
+                      id="roomForm" enctype="multipart/form-data">
                     <input type="hidden" name="action" value="create">
 
                     <div class="row">
@@ -42,7 +43,7 @@
                                 </select>
                             </div>
 
-                            <div class="mb3">
+                            <div class="mb-3">
                                 <label for="sleepSlot" class="form-label">Capacity (People) <span
                                         class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="sleepSlot" name="sleepSlot" required
@@ -59,9 +60,14 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="imageUrl" class="form-label">Image URL</label>
-                                <input type="url" class="form-control" id="imageUrl" name="imageUrl"
-                                    placeholder="https://example.com/room.jpg">
+                                <label for="image" class="form-label">Room Image <span class="text-danger">*</span></label>
+                                <input type="file" class="form-control" id="image" name="image"
+                                    accept="image/jpeg,image/png,image/webp,image/gif" required>
+                                <small class="text-muted">Max 5MB. Allowed: JPEG, PNG, WebP, GIF</small>
+                                <div id="imagePreview" class="mt-2" style="display:none;">
+                                    <img id="previewImg" src="" alt="Preview" 
+                                         class="img-thumbnail" style="max-height: 150px;">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -86,3 +92,18 @@
                 </form>
             </div>
         </div>
+
+        <script>
+            // Image preview
+            document.getElementById('image').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('previewImg').src = e.target.result;
+                        document.getElementById('imagePreview').style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        </script>

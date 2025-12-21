@@ -164,38 +164,55 @@
                                     <div class="col-md-6 mb-3">
                                         <label for="checkInDate" class="form-label">
                                             Check-in Date *
-                                            <c:if test="${!booking.canEditCheckIn()}">
-                                                <i class="bi bi-lock-fill lock-icon"
-                                                    title="Locked for confirmed bookings"></i>
-                                            </c:if>
                                         </label>
-                                        <!-- Hidden input for disabled field (browser doesn't send disabled inputs) -->
+                                        <input type="date" class="form-control" id="checkInDate" name="checkInDate"
+                                            value="${booking.checkInDate}" required ${!booking.canEditCheckIn()
+                                            ? 'disabled' : '' }>
                                         <c:if test="${!booking.canEditCheckIn()}">
                                             <input type="hidden" name="checkInDate" value="${booking.checkInDate}">
-                                        </c:if>
-                                        <input type="date" class="form-control" id="checkInDate" 
-                                            ${booking.canEditCheckIn() ? 'name="checkInDate"' : ''}
-                                            value="${booking.checkInDate}" required ${!booking.canEditCheckIn()
-                                            ? 'disabled' : '' } min="${booking.checkInDate}">
-                                        <c:if test="${!booking.canEditCheckIn()}">
-                                            <small class="text-warning">
-                                                <i class="bi bi-info-circle"></i> Check-in locked for confirmed bookings
-                                            </small>
                                         </c:if>
                                     </div>
 
                                     <div class="col-md-6 mb-3">
                                         <label for="checkOutDate" class="form-label">Check-out Date *</label>
-                                        <!-- Hidden input for disabled field -->
+                                        <input type="date" class="form-control" id="checkOutDate" name="checkOutDate"
+                                            value="${booking.checkOutDate}" required ${!booking.canEditCheckOut()
+                                            ? 'disabled' : '' }>
                                         <c:if test="${!booking.canEditCheckOut()}">
                                             <input type="hidden" name="checkOutDate" value="${booking.checkOutDate}">
                                         </c:if>
-                                        <input type="date" class="form-control" id="checkOutDate" 
-                                            ${booking.canEditCheckOut() ? 'name="checkOutDate"' : ''}
-                                            value="${booking.checkOutDate}" required ${!booking.canEditCheckOut()
-                                            ? 'disabled' : '' } min="${booking.checkInDate}">
                                     </div>
                                 </div>
+
+                                <!-- Price Calculation -->
+                                <div id="priceCalculation" class="alert alert-info d-none">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted">Giá cũ:</small>
+                                            <div><strong id="oldPrice">${booking.formattedTotalPrice}</strong></div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Giá mới:</small>
+                                            <div><strong id="newPrice">--</strong></div>
+                                        </div>
+                                    </div>
+                                    <div id="priceDiffContainer" class="mt-2 d-none">
+                                        <hr>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span id="priceDiffLabel">Chênh lệch:</span>
+                                            <strong id="priceDiff" class="fs-5">--</strong>
+                                        </div>
+                                        <small id="paymentNote" class="text-warning d-none">
+                                            <i class="bi bi-exclamation-triangle"></i> Bạn cần thanh toán thêm trước khi
+                                            cập nhật
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden fields for payment calculation -->
+                                <input type="hidden" id="originalPrice" value="${booking.totalPrice}">
+                                <input type="hidden" id="roomPrice" value="${room.roomPrice}">
+                                <input type="hidden" id="needsPayment" name="needsPayment" value="false">
 
                                 <div class="d-flex gap-3 mt-4">
                                     <button type="submit" class="btn btn-save">
@@ -212,17 +229,12 @@
 
                     <div class="col-lg-4">
                         <div class="info-card">
-                            <h5 class="mb-3"><i class="bi bi-info-circle"></i> Edit Rules</h5>
+                            <h5 class="mb-3"><i class="bi bi-info-circle"></i> Quy định chỉnh sửa</h5>
                             <ul class="mb-0" style="padding-left: 1.2rem;">
-                                <c:if test="${booking.status.toString() == 'PENDING'}">
-                                    <li class="mb-2">You can modify both check-in and check-out dates</li>
-                                </c:if>
-                                <c:if test="${booking.status.toString() == 'CONFIRMED'}">
-                                    <li class="mb-2">Check-in date is locked for confirmed bookings</li>
-                                    <li class="mb-2">You can extend or reduce your stay duration</li>
-                                </c:if>
-                                <li class="mb-2">Total price will be recalculated automatically</li>
-                                <li>Room availability will be re-validated</li>
+                                <li class="mb-2">Bạn có thể thay đổi cả check-in và check-out</li>
+                                <li class="mb-2">Hệ thống sẽ kiểm tra phòng trống</li>
+                                <li class="mb-2">Nếu giá mới cao hơn → cần thanh toán thêm</li>
+                                <li>Nếu giá mới thấp hơn → không hoàn tiền</li>
                             </ul>
                         </div>
 
@@ -252,6 +264,81 @@
             </div>
 
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+            <script>
+                const checkInInput = document.getElementById('checkInDate');
+                const checkOutInput = document.getElementById('checkOutDate');
+                const originalPrice = parseFloat(document.getElementById('originalPrice').value) || 0;
+                const roomPrice = parseFloat(document.getElementById('roomPrice').value) || 0;
+                const priceCalcDiv = document.getElementById('priceCalculation');
+                const newPriceSpan = document.getElementById('newPrice');
+                const priceDiffContainer = document.getElementById('priceDiffContainer');
+                const priceDiffSpan = document.getElementById('priceDiff');
+                const priceDiffLabel = document.getElementById('priceDiffLabel');
+                const paymentNote = document.getElementById('paymentNote');
+                const needsPaymentInput = document.getElementById('needsPayment');
+                const submitBtn = document.querySelector('button[type="submit"]');
+                const today = new Date().toISOString().split('T')[0];
+
+                // Set min dates
+                if (checkInInput && !checkInInput.disabled) {
+                    checkInInput.setAttribute('min', today);
+                }
+
+                function calculatePrice() {
+                    const checkIn = new Date(checkInInput.value);
+                    const checkOut = new Date(checkOutInput.value);
+
+                    if (isNaN(checkIn) || isNaN(checkOut) || checkOut <= checkIn) {
+                        priceCalcDiv.classList.add('d-none');
+                        return;
+                    }
+
+                    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+                    const newPrice = nights * roomPrice;
+                    const diff = newPrice - originalPrice;
+
+                    priceCalcDiv.classList.remove('d-none');
+                    newPriceSpan.textContent = new Intl.NumberFormat('vi-VN').format(newPrice) + ' VND';
+
+                    if (diff !== 0) {
+                        priceDiffContainer.classList.remove('d-none');
+                        if (diff > 0) {
+                            priceDiffSpan.textContent = '+' + new Intl.NumberFormat('vi-VN').format(diff) + ' VND';
+                            priceDiffSpan.className = 'fs-5 text-danger';
+                            priceDiffLabel.textContent = 'Cần thanh toán thêm:';
+                            paymentNote.classList.remove('d-none');
+                            needsPaymentInput.value = 'true';
+                            submitBtn.innerHTML = '<i class="bi bi-credit-card"></i> Thanh toán & Cập nhật';
+                        } else {
+                            priceDiffSpan.textContent = new Intl.NumberFormat('vi-VN').format(diff) + ' VND';
+                            priceDiffSpan.className = 'fs-5 text-success';
+                            priceDiffLabel.textContent = 'Giảm:';
+                            paymentNote.classList.add('d-none');
+                            needsPaymentInput.value = 'false';
+                            submitBtn.innerHTML = '<i class="bi bi-save"></i> Lưu thay đổi';
+                        }
+                    } else {
+                        priceDiffContainer.classList.add('d-none');
+                        needsPaymentInput.value = 'false';
+                        submitBtn.innerHTML = '<i class="bi bi-save"></i> Lưu thay đổi';
+                    }
+                }
+
+                if (checkInInput) {
+                    checkInInput.addEventListener('change', function () {
+                        checkOutInput.setAttribute('min', this.value);
+                        if (checkOutInput.value && checkOutInput.value <= this.value) {
+                            const nextDay = new Date(this.value);
+                            nextDay.setDate(nextDay.getDate() + 1);
+                            checkOutInput.value = nextDay.toISOString().split('T')[0];
+                        }
+                        calculatePrice();
+                    });
+                }
+                if (checkOutInput) {
+                    checkOutInput.addEventListener('change', calculatePrice);
+                }
+            </script>
         </body>
 
         </html>

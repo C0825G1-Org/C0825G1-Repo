@@ -2,7 +2,9 @@ package com.codegym.homestay_booking.controller.customer;
 
 import com.codegym.homestay_booking.entity.Booking;
 import com.codegym.homestay_booking.entity.Booking.BookingStatus;
+import com.codegym.homestay_booking.entity.Room;
 import com.codegym.homestay_booking.service.BookingService;
+import com.codegym.homestay_booking.repository.RoomRepository;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -11,12 +13,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @WebServlet(name = "CustomerBookingController", urlPatterns = {"/booking/create", "/my-bookings"})
 public class CustomerBookingController extends HttpServlet {
     
     private BookingService bookingService = new BookingService();
+    private RoomRepository roomRepository = new RoomRepository();
     
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -170,7 +174,11 @@ public class CustomerBookingController extends HttpServlet {
                 return;
             }
             
+            // Get room info for price calculation
+            Room room = roomRepository.getById(booking.getRoomId());
+            
             request.setAttribute("booking", booking);
+            request.setAttribute("room", room);
             request.setAttribute("email", email);
             request.getRequestDispatcher("/WEB-INF/views/customer/booking-edit.jsp")
                     .forward(request, response);
@@ -189,7 +197,34 @@ public class CustomerBookingController extends HttpServlet {
             String email = request.getParameter("email");
             LocalDate checkIn = LocalDate.parse(request.getParameter("checkInDate"));
             LocalDate checkOut = LocalDate.parse(request.getParameter("checkOutDate"));
+            String needsPayment = request.getParameter("needsPayment");
             
+            // Get current booking and room
+            Booking booking = bookingService.getById(bookingId);
+            Room room = roomRepository.getById(booking.getRoomId());
+            
+            // Calculate price difference
+            long newNights = ChronoUnit.DAYS.between(checkIn, checkOut);
+            float newPrice = room.getRoomPrice() * newNights;
+            float priceDiff = newPrice - booking.getTotalPrice();
+            
+            // If payment needed, redirect to payment page
+            if ("true".equals(needsPayment) && priceDiff > 0) {
+                // Store edit info in session for payment callback
+                request.getSession().setAttribute("editBookingId", bookingId);
+                request.getSession().setAttribute("editCheckIn", checkIn.toString());
+                request.getSession().setAttribute("editCheckOut", checkOut.toString());
+                request.getSession().setAttribute("editNewPrice", newPrice);
+                request.getSession().setAttribute("editEmail", email);
+                
+                // Redirect to payment for difference
+                response.sendRedirect(request.getContextPath() + 
+                    "/payment/edit-payment?amount=" + (int)priceDiff + 
+                    "&bookingId=" + bookingId);
+                return;
+            }
+            
+            // No payment needed - update directly
             boolean success = bookingService.updateBookingByCustomer(
                 bookingId, email, checkIn, checkOut
             );

@@ -96,7 +96,8 @@ public class BookingRepository {
 
     public boolean insert(Booking booking) {
         try {
-            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(INSERT_BOOKING);
+            PreparedStatement ps = BaseRepository.getConnection().prepareStatement(
+                INSERT_BOOKING, java.sql.Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, booking.getGuestName());
             ps.setString(2, booking.getGuestEmail());
             ps.setInt(3, booking.getRoomId());
@@ -104,7 +105,14 @@ public class BookingRepository {
             ps.setDate(5, java.sql.Date.valueOf(booking.getCheckOutDate()));
             ps.setFloat(6, booking.getTotalPrice());
             ps.setString(7, booking.getStatus().toString());
-            return ps.executeUpdate() > 0;
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                ResultSet rs = ps.getGeneratedKeys();
+                if (rs.next()) {
+                    booking.setBookingId(rs.getInt(1));
+                }
+                return true;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

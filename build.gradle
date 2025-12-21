@@ -32,6 +32,12 @@ dependencies {
     implementation("com.mysql:mysql-connector-j:9.5.0")
     // https://mvnrepository.com/artifact/org.json/json
     implementation("org.json:json:20230227")
+    
+    // JavaMail for sending emails
+    implementation("com.sun.mail:javax.mail:1.6.2")
+    
+    // Apache PDFBox for PDF generation
+    implementation("org.apache.pdfbox:pdfbox:2.0.29")
 }
 
 test {

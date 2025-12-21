@@ -26,9 +26,11 @@
         <!-- Edit Room Form -->
         <div class="card">
             <div class="card-body">
-                <form method="post" action="${pageContext.request.contextPath}/admin/rooms">
+                <form method="post" action="${pageContext.request.contextPath}/admin/rooms"
+                    enctype="multipart/form-data">
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="roomId" value="${room.roomId}">
+                    <input type="hidden" name="existingImageUrl" value="${room.imageUrl}">
 
                     <div class="row">
                         <div class="col-md-6">
@@ -73,9 +75,23 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="imageUrl" class="form-label">Image URL</label>
-                                <input type="url" class="form-control" id="imageUrl" name="imageUrl"
-                                    value="${room.imageUrl}" placeholder="https://example.com/room.jpg">
+                                <label for="image" class="form-label">Room Image</label>
+                                <c:if test="${not empty room.imageUrl}">
+                                    <div class="mb-2">
+                                        <img src="${pageContext.request.contextPath}${room.imageUrl}"
+                                            alt="Current image" class="img-thumbnail" style="max-height: 120px;"
+                                            id="currentImage">
+                                        <small class="d-block text-muted">Current image</small>
+                                    </div>
+                                </c:if>
+                                <input type="file" class="form-control" id="image" name="image"
+                                    accept="image/jpeg,image/png,image/webp,image/gif">
+                                <small class="text-muted">Leave empty to keep current image. Max 5MB.</small>
+                                <div id="imagePreview" class="mt-2" style="display:none;">
+                                    <img id="previewImg" src="" alt="Preview" class="img-thumbnail"
+                                        style="max-height: 120px;">
+                                    <small class="d-block text-success">New image preview</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -100,3 +116,21 @@
                 </form>
             </div>
         </div>
+
+        <script>
+            // Image preview
+            document.getElementById('image').addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        document.getElementById('previewImg').src = e.target.result;
+                        document.getElementById('imagePreview').style.display = 'block';
+                        // Optionally hide current image
+                        const currentImg = document.getElementById('currentImage');
+                        if (currentImg) currentImg.style.opacity = '0.5';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        </script>
