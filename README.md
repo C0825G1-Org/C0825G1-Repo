@@ -1,293 +1,350 @@
-# 🏠 Homestay Booking System
+# Homestay Booking Management System
 
-A comprehensive web-based booking management system for homestay accommodations built with Java Servlet/JSP and MySQL.
-
-![Java](https://img.shields.io/badge/Java-8+-orange?style=flat-square&logo=java)
-![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?style=flat-square&logo=mysql)
-![Bootstrap](https://img.shields.io/badge/Bootstrap-5.0-purple?style=flat-square&logo=bootstrap)
-![Tomcat](https://img.shields.io/badge/Tomcat-9.0-yellow?style=flat-square&logo=apache-tomcat)
-
-## 📋 Table of Contents
-
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Usage](#-usage)
-- [API Endpoints](#-api-endpoints)
-- [Database Schema](#-database-schema)
-- [Business Rules](#-business-rules)
+A comprehensive web-based booking management system for homestay businesses, featuring QR payment integration, automated PDF invoice generation, analytics dashboard, and AI-powered business insights.
 
 ---
 
-## ✨ Features
+## Table of Contents
 
-### Customer Portal
-- 🔐 User authentication (Login/Register)
-- 🏨 Browse available rooms
-- 📅 Book rooms with date selection
-- ✏️ Edit bookings (within rules)
-- 🔄 Change rooms
-- ❌ Request booking cancellation
-- 📜 View booking history
-
-### Admin Dashboard
-- 📊 Dashboard with analytics & charts
-- 🤖 AI-powered business insights (Gemini API)
-- 📋 Booking management with advanced filters
-- ✅ Approve/Reject bookings
-- 🚫 Handle cancellation requests
-- 🏠 Room management
-- 👥 Customer management
-
-### Technical Features
-- 🔒 Transaction management for data integrity
-- 🔍 Server-side pagination, filtering & search
-- ⚡ AJAX-based room availability check
-- 📱 Responsive Bootstrap 5 UI
-- 💳 Automatic price calculation
+- [Introduction](#introduction)
+- [Tech Stack](#tech-stack)
+- [System Architecture](#system-architecture)
+- [Features](#features)
+- [Booking Status Flow](#booking-status-flow)
+- [Payment & Invoice](#payment--invoice)
+- [Dashboard & Analytics](#dashboard--analytics)
+- [AI Insights](#ai-insights)
+- [Database Schema](#database-schema)
+- [Installation](#installation)
+- [Future Roadmap](#future-roadmap)
+- [Author](#author)
 
 ---
 
-## 🛠 Tech Stack
+## Introduction
 
-| Layer | Technology |
-|-------|------------|
-| **Backend** | Java 8+, Servlet 4.0, JSP |
-| **Frontend** | HTML5, CSS3, JavaScript, Bootstrap 5 |
-| **Database** | MySQL 8.0 |
-| **Server** | Apache Tomcat 9.0 |
-| **Build Tool** | Gradle |
-| **AI Integration** | Google Gemini API |
-| **Charts** | Chart.js |
+### Problem Statement
+
+Small and medium homestay businesses often struggle with:
+- Manual booking management leading to overbooking
+- Lack of real-time room availability tracking
+- Time-consuming invoice generation
+- No data-driven insights for business decisions
+
+### Solution
+
+This system provides a complete digital solution for homestay management:
+- **Real-time booking management** with conflict prevention
+- **Automated payment processing** via bank QR code
+- **Instant PDF invoice generation** sent automatically to customers
+- **Analytics dashboard** with business performance metrics
+- **AI-powered insights** for strategic decision making
+
+### Target Users
+
+| Role | Capabilities |
+|------|--------------|
+| **Customer** | Browse rooms, make bookings, pay online, receive invoices |
+| **Admin** | Manage rooms, process bookings, view analytics, get AI insights |
 
 ---
 
-## 📁 Project Structure
+## Tech Stack
+
+### Backend
+| Technology | Purpose |
+|------------|---------|
+| Java Servlet | Request handling & business logic |
+| JSP | Server-side rendering |
+| JDBC | Database connectivity |
+| MySQL | Data persistence |
+| JavaMail API | Email delivery |
+| Apache PDFBox | PDF invoice generation |
+
+### Frontend
+| Technology | Purpose |
+|------------|---------|
+| JSP + JSTL | Dynamic page rendering |
+| Bootstrap 5 | Responsive UI components |
+| Chart.js | Dashboard visualizations |
+| HTML/CSS/JavaScript | Client-side interactivity |
+
+### Integrations
+| Service | Purpose |
+|---------|---------|
+| VNPay | QR code payment gateway |
+| Gmail SMTP | Transactional emails |
+| Google Gemini 2.5 Flash | AI business insights |
+
+---
+
+## System Architecture
+
+### MVC Pattern
 
 ```
-homestay_booking/
-├── src/main/java/com/codegym/homestay_booking/
-│   ├── controller/
-│   │   ├── admin/          # Admin controllers
-│   │   │   ├── BookingController.java
-│   │   │   ├── DashboardServlet.java
-│   │   │   ├── AvailableRoomsServlet.java  # AJAX API
-│   │   │   └── ...
-│   │   └── customer/       # Customer controllers
-│   │       ├── CustomerBookingController.java
-│   │       └── ...
-│   ├── entity/             # Data models
-│   │   ├── Booking.java
-│   │   ├── Room.java
-│   │   └── User.java
-│   ├── repository/         # Database access
-│   │   ├── BookingRepository.java
-│   │   ├── RoomRepository.java
-│   │   └── BaseRepository.java
-│   ├── service/            # Business logic
-│   │   ├── BookingService.java
-│   │   └── AIInsightService.java
-│   └── config/             # Configuration
-│       └── ConfigLoader.java
-├── src/main/webapp/
-│   ├── WEB-INF/views/
-│   │   ├── admin/          # Admin JSP pages
-│   │   └── customer/       # Customer JSP pages
-│   └── assets/             # CSS, JS, images
-├── build.gradle
-└── README.md
+┌─────────────────────────────────────────────────────────────┐
+│                        CLIENT (Browser)                      │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     CONTROLLER LAYER                         │
+│  (CustomerRoomController, BookingController, PaymentController)│
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      SERVICE LAYER                           │
+│  (BookingService, RoomService, EmailService, VNPayService)   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    REPOSITORY LAYER                          │
+│    (BookingRepository, RoomRepository, PaymentRepository)    │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      MySQL DATABASE                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Booking & Payment Flow
+
+```
+Customer selects room → Enters details → Initiates payment
+                                              │
+                                              ▼
+                                    VNPay QR generated
+                                              │
+                                              ▼
+                              Customer completes bank transfer
+                                              │
+                                              ▼
+                              VNPay callback → Verify signature
+                                              │
+                                              ▼
+                              Create booking (CONFIRMED)
+                                              │
+                                              ▼
+                              Generate PDF → Send email
 ```
 
 ---
 
-## 🚀 Installation
+## Features
+
+### Customer Features
+
+| Feature | Description |
+|---------|-------------|
+| Room Browsing | View all available rooms with images, pricing, and capacity |
+| Availability Search | Find rooms available for specific date ranges |
+| Online Booking | Book rooms with real-time availability validation |
+| QR Payment | Pay via bank transfer using VNPay QR code |
+| Email Invoice | Automatically receive PDF invoice after payment |
+| Booking Management | View, edit, or request cancellation of bookings |
+
+### Admin Features
+
+| Feature | Description |
+|---------|-------------|
+| Room CRUD | Create, read, update, delete room listings |
+| Image Upload | Upload room photos from local storage |
+| Booking Management | View all bookings, update status, manual creation |
+| Invoice Generation | Print/download PDF invoices for any booking |
+| Dashboard | Visual analytics with charts and KPIs |
+| AI Insights | AI-generated business recommendations |
+
+---
+
+## Booking Status Flow
+
+```
+                    ┌───────────────┐
+                    │    PENDING    │
+                    │ (Admin create)│
+                    └───────┬───────┘
+                            │
+              ┌─────────────┴─────────────┐
+              │                           │
+              ▼                           ▼
+    ┌─────────────────┐         ┌─────────────────┐
+    │   CONFIRMED     │         │   CANCELLED     │
+    │ (Payment done)  │         │ (Rejected/Cancel)│
+    └────────┬────────┘         └─────────────────┘
+             │
+             ▼
+    ┌─────────────────┐
+    │   COMPLETED     │
+    │(After checkout) │
+    └─────────────────┘
+```
+
+### Status Definitions
+
+| Status | Trigger | Editable |
+|--------|---------|----------|
+| **PENDING** | Admin creates booking manually | Yes (before check-in) |
+| **CONFIRMED** | Customer pays via VNPay | Yes (before check-in) |
+| **COMPLETED** | Admin marks after guest checkout | No |
+| **CANCELLED** | Admin rejects or cancels | No |
+
+---
+
+## Payment & Invoice
+
+### Payment Methods
+
+| Method | User | Flow |
+|--------|------|------|
+| VNPay QR | Customer | Scan QR → Pay via bank app → Auto-confirm |
+| Manual | Admin | Create booking directly (no payment required) |
+
+### Invoice System
+
+- **Generation**: PDF created using Apache PDFBox
+- **Content**: Homestay info, guest details, booking summary, total amount
+- **Delivery**: 
+  - Customer: Auto-sent via email after successful payment
+  - Admin: Download/print from booking management
+
+---
+
+## Dashboard & Analytics
+
+### Available Charts
+
+| Chart | Business Value |
+|-------|----------------|
+| Revenue Over Time | Track income trends, identify peak periods |
+| Bookings by Status | Monitor conversion rates, identify bottlenecks |
+| Monthly Bookings | Seasonal demand analysis |
+| Top Booked Rooms | Identify high-performers, optimize pricing |
+| Average Stay Duration | Guest behavior insights |
+
+### Key Metrics
+
+- Total Revenue
+- Active Bookings
+- Available Rooms
+- Occupancy Rate
+
+---
+
+## AI Insights
+
+### Functionality
+
+The system integrates Google Gemini 2.5 Flash to analyze booking data and provide:
+
+- **Business Performance Assessment**: Overall health of the business
+- **Trend Analysis**: Booking patterns and seasonality
+- **Actionable Recommendations**: Specific steps to improve revenue
+- **Risk Identification**: Potential issues to address
+
+### Use Case
+
+Admin accesses the AI Report section to receive intelligent analysis without manual data processing, enabling data-driven decision making.
+
+---
+
+## Database Schema
+
+### Core Tables
+
+| Table | Purpose |
+|-------|---------|
+| `room` | Room information (type, price, capacity, status, image) |
+| `booking` | Reservation records with guest info and dates |
+| `payment` | Transaction records for VNPay integration |
+
+### Relationships
+
+```
+room (1) ────────< (N) booking
+booking (1) ────────< (N) payment
+```
+
+---
+
+## Installation
 
 ### Prerequisites
-- Java JDK 8 or higher
-- Apache Tomcat 9.0
-- MySQL 8.0
-- Gradle (optional, wrapper included)
 
-### Steps
+- JDK 8 or higher
+- Apache Tomcat 9.x
+- MySQL 8.x
+- Gradle
+- Gmail account with App Password (for email feature)
 
-1. **Clone the repository**
+### Setup Steps
+
+1. **Clone repository**
    ```bash
-   git clone https://github.com/C0825G1-Org/C0825G1-Repo.git
-   cd homestay_booking
+   git clone https://github.com/your-username/homestay-booking.git
+   cd homestay-booking
    ```
 
-2. **Create MySQL database**
+2. **Create database**
    ```sql
    CREATE DATABASE homestay_booking;
    ```
 
-3. **Import database schema**
-   ```bash
-   mysql -u root -p homestay_booking < database/schema.sql
-   ```
+3. **Import SQL schema**
+   - Execute `database/schema.sql`
 
 4. **Configure database connection**
-   
-   Edit `src/main/java/.../repository/BaseRepository.java`:
-   ```java
-   private static final String URL = "jdbc:mysql://localhost:3306/homestay_booking";
-   private static final String USER = "your_username";
-   private static final String PASSWORD = "your_password";
-   ```
+   - Update `BaseRepository.java` with your MySQL credentials
 
-5. **Build and deploy**
+5. **Configure email (optional)**
+   - Update `EmailConfig.java` with Gmail and App Password
+
+6. **Build project**
    ```bash
    ./gradlew build
-   # Deploy WAR to Tomcat
    ```
 
-6. **Access the application**
-   - Customer: `http://localhost:8080/homestay_booking/`
-   - Admin: `http://localhost:8080/homestay_booking/admin`
+7. **Deploy to Tomcat**
+   - Copy WAR file to `tomcat/webapps/`
+   - Or run via IDE with Tomcat integration
+
+8. **Access application**
+   - Customer: `http://localhost:8080/`
+   - Admin: `http://localhost:8080/admin`
 
 ---
 
-## ⚙️ Configuration
+## Future Roadmap
 
-### Gemini AI API (Optional)
-Create file: `src/main/java/.../config/key`
-```
-your-gemini-api-key
-```
-
----
-
-## 📖 Usage
-
-### Admin Workflow
-
-1. **Create Booking**
-   ```
-   Select Check-in → Select Check-out → AJAX checks rooms → Select Room → Submit
-   ```
-
-2. **Manage Bookings**
-   - Filter by: Status, Room, Date Range, Search
-   - Actions: Confirm, Cancel, Complete
-
-### Customer Workflow
-
-1. **Book a Room**
-   - Browse rooms → Select dates → Confirm booking
-
-2. **Manage Bookings**
-   - Edit dates (PENDING/CONFIRMED)
-   - Change room (PENDING only)
-   - Request cancellation
+| Feature | Description |
+|---------|-------------|
+| Multi-gateway Payment | Add Momo, ZaloPay support |
+| Dynamic Pricing | Adjust prices based on demand/season |
+| Mobile Application | Native iOS/Android apps |
+| AI Demand Forecasting | Predict future booking volumes |
+| Loyalty Program | Points and rewards for repeat customers |
+| Multi-language | Support English, Vietnamese, etc. |
 
 ---
 
-## 🔌 API Endpoints
+## Author
 
-### AJAX API
+**Project Purpose**: Educational project for Java Web Development (Module 4)
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/admin/api/available-rooms` | GET | Get rooms available for date range |
-
-**Parameters:**
-- `checkIn` - Check-in date (YYYY-MM-DD)
-- `checkOut` - Check-out date (YYYY-MM-DD)
-
-**Response:**
-```json
-[
-  {"roomId": 1, "roomType": "Family", "roomPrice": 500000, "sleepSlot": 4},
-  {"roomId": 2, "roomType": "Business", "roomPrice": 800000, "sleepSlot": 2}
-]
-```
+**Technologies Demonstrated**:
+- Java Servlet/JSP architecture
+- Database design and JDBC
+- Payment gateway integration
+- Email automation
+- PDF generation
+- AI API integration
+- Responsive web design
 
 ---
 
-## 🗄 Database Schema
+## License
 
-### Tables
-
-```sql
--- Users
-CREATE TABLE user (
-    user_id INT PRIMARY KEY AUTO_INCREMENT,
-    email VARCHAR(255) UNIQUE,
-    password VARCHAR(255),
-    full_name VARCHAR(255),
-    role ENUM('ADMIN', 'CUSTOMER')
-);
-
--- Rooms
-CREATE TABLE room (
-    room_id INT PRIMARY KEY AUTO_INCREMENT,
-    room_type ENUM('Family', 'Business', 'Honey_Moon'),
-    sleep_slot INT,
-    room_price DECIMAL(10,2),
-    status ENUM('AVAILABLE', 'UNAVAILABLE'),
-    image_url VARCHAR(500),
-    description TEXT
-);
-
--- Bookings
-CREATE TABLE booking (
-    booking_id INT PRIMARY KEY AUTO_INCREMENT,
-    room_id INT,
-    guest_name VARCHAR(255),
-    guest_email VARCHAR(255),
-    check_in_date DATE,
-    check_out_date DATE,
-    total_price DECIMAL(10,2),
-    status ENUM('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'CANCELLED_REQUEST'),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (room_id) REFERENCES room(room_id)
-);
-```
-
----
-
-## 📜 Business Rules
-
-### Booking Status Flow
-```
-PENDING → CONFIRMED → COMPLETED
-    ↓        
-CANCELLED_REQUEST → CANCELLED
-```
-
-### Edit Rules
-
-| Status | Can Edit Dates | Can Change Room           | Can Cancel |
-|--------|---------------|---------------------------|------------|
-| PENDING | ✅ Both | ✅ Yes                     | ⚠️ Request |
-| CONFIRMED | ✅ Check-out only | ✅ Only before check-in    | ⚠️ Request |
-| COMPLETED | ❌ No | ❌ No                      | ❌ No |
-| CANCELLED | ❌ No | ❌ No                      | ❌ No |
-
-### Room Availability
-```sql
--- Room is NOT available if exists booking where:
-status IN ('PENDING', 'CONFIRMED')
-AND check_in_date < new_check_out
-AND check_out_date > new_check_in
-```
-
----
-
-## 👥 Contributors
-
-- **C0825G1-Org** - Development Team
-
----
-
-## 📄 License
-
-This project is developed for educational purposes.
-
----
-
-<p align="center">
-  Made with ❤️ by Tri
-</p>
+This project is for educational purposes.
