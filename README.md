@@ -332,7 +332,7 @@ booking (1) ────────< (N) payment
 
 ## Author
 
-**Project Purpose**: Educational project for Java Web Development (Module 4)
+**Project Purpose**: Educational project for Java Web BackEnd Development
 
 **Technologies Demonstrated**:
 - Java Servlet/JSP architecture
